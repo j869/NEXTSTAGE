@@ -1,0 +1,1414 @@
+<%- include('../partials/header') %>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+  /* Add any custom styles if needed */
+</style>
+
+
+<%
+
+let flexiBalance = Number(flexTilRdo.totalFlexi) || 0;
+  let tilBalance = Number(flexTilRdo.totalTil) || 0;
+  let rdoBalance = Number(flexTilRdo.totalrdo) || 0;
+
+  let noSchedule = userSchedule[0] ? userSchedule[0].paid_hours.every(hour => hour <= 0) : false ;
+
+
+
+%>
+
+
+
+
+
+<% if (queryMessage && queryMessage == "dateAlreadyExist" ) { %>
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  <strong>Timesheet already filled</strong> Please Select Another date!
+</div>
+
+
+<script>
+  var alertList = document.querySelectorAll(".alert");
+  alertList.forEach(function(alert) {
+    new bootstrap.Alert(alert);
+  });
+</script>
+
+<div class="toast-container position-fixed top-0 end-0 p-3" data-bs-autohide="true">
+  <div id="liveToast" class="toast text-bg-warning" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <strong class="me-auto">Timesheet Already Filled</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">
+      Please select another Date!
+    </div>
+  </div>
+</div>
+<% } else if (queryMessage == "noSchedule") { %>
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  <strong>You Don't have any schedule yet</strong> <br>Please Request for a work schedule first!
+</div>
+
+<script>
+  var alertList = document.querySelectorAll(".alert");
+  alertList.forEach(function(alert) {
+    new bootstrap.Alert(alert);
+  });
+</script>
+
+<div class="toast-container position-fixed top-0 end-0 p-3" data-bs-autohide="true">
+  <div id="liveToast" class="toast text-bg-warning" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <strong class="me-auto">Timesheet Already Filled</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">
+      Please select another Date!
+    </div>
+  </div>
+</div>
+<% } %>
+
+
+<div class="main col py-3 px-4 titlebar">
+  
+
+  <div class="balances d-flex justify-content-between ">
+    <h1 class="pagetitle text-left">Timesheet</h1>
+
+    <div class="tfr-container d-flex gap-5">
+
+      <% if (userSchedule[0] && userSchedule[0].disable_flexi === false) { %>
+      <div class="d-flex gap-2">
+        <p class="fw-bold"><strong>Flexi:</strong></p>
+        <span class="text-secondary"><%=flexiBalance%> <%= flexiBalance > 1 ? 'Hours' : 'Hour'%></span>
+      </div>
+      <% } %>
+      <% if (userSchedule[0] && userSchedule[0].disable_til === false) { %>
+      <div class="d-flex gap-2">
+        <p class="fw-bold"><strong>Til:</strong></p>
+        <span class="text-secondary"><%=tilBalance%> <%= tilBalance > 1 ? 'Hours' : 'Hour'%></span>
+      </div>
+      <% } %>
+      <% if (userSchedule[0] && userSchedule[0].disable_rdo === false) { %>
+      <div class="d-flex gap-2">
+        <p class="fw-bold"><strong>RDO:</strong></p>
+        <span class="text-secondary"><%=rdoBalance%> <%= rdoBalance > 1 ? 'Days' : 'Day'%></span>
+      </div>
+      <% } %>
+    </div>
+    </div>
+   
+
+  <div class="p-4 d-flex justify-content-between">
+
+    <div class="row p-0 d-flex">
+    
+
+    <%if(!noSchedule){%>
+    <div class="col-auto">
+      <a href="/plannedLeave?date=<%= new Date().toISOString().split('T')[0] %>" class="btn btngray" id="addLeaveBtn">
+        <i class="fas fa-door-open                          "></i> Planned Leave</a>
+    </div>
+
+    <div class="col-auto">
+      <a href="/timesheets/leaveDay/add?date=<%= new Date().toISOString().split('T')[0] %>" class="btn btngray" id="addDayLeaveBtn">
+        <i class="fas fa-door-open                          "></i> Leave For a Day</a>
+    </div>
+    <%} else {%>
+      <div class="col-auto d-none">
+        <a href="/plannedLeave?date=<%= new Date().toISOString().split('T')[0] %>" class="btn btngray disabled" id="addLeaveBtn">
+          <i class="fas fa-door-open                          "></i> Planned Leave</a>
+      </div>
+  
+      <div class="col-auto d-none">
+        <a href="/timesheets/leaveDay/add?date=<%= new Date().toISOString().split('T')[0] %>" class="btn btngray disabled" id="addDayLeaveBtn">
+          <i class="fas fa-door-open                          "></i> Leave For a Day</a>
+      </div>
+    <%}%>
+
+    
+   </div>
+   <div class="days-marker d-flex gap-2">
+    <button class="btn btn-primary" id="mark-unmark-btn" onclick="toggleMarkUnmark()">
+      Mark Timesheets
+    </button>
+    
+    <div id="timesheetFormContainer" style="display: none; margin-left: 10px;">
+      <form action="/timesheets/multipleSubmitTimesheetStatus" method="post">
+        <input type="hidden" id="selectedTimesheetIds" name="selectedTimesheetIds" value="">
+        <button type="submit" name="action" value="pending" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Save">
+          <i class="fa-solid fa-save" aria-hidden="true"></i>
+        </button>
+        <button type="submit" name="action" value="draft" class="btn btn-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Draft">
+          <i class="fa-solid fa-file-alt" aria-hidden="true"></i>
+        </button>
+      </form>
+    </div>
+    <span id="selectedCount" class="ml-2" style="font-size: 1.2rem; color: var(--primary-clr);"></span>
+  </div>
+    
+
+
+
+
+
+
+    <!-- <div class="col-auto ms-auto ">
+      <label for="monthSelect">Select Month:</label>
+      <select id="monthSelect" class="form-select fw-bold">
+        Options will be populated by JavaScript -->
+      <!-- </select> -->
+    <!-- </div> -->
+    </div>
+
+
+
+
+<div class="time-sheet-container main-timesheet table-responsive pt-0 mx-4 rounded mb-3" style="height: max-content; position: relative; z-index: 0;">
+  <div class="calendar-container">
+    <div class="left">
+      <div class="calendar">
+        <div class="month">
+          <i class="fas fa-angle-left prev"></i>
+          <div class="date">december 2015</div>
+          <i class="fas fa-angle-right next"></i>
+        </div>
+        <div class="weekdays">
+          <div>Sun</div>
+          <div>Mon</div>
+          <div>Tue</div>
+          <div>Wed</div>
+          <div>Thu</div>
+          <div>Fri</div>
+          <div>Sat</div>
+        </div>
+        <div class="days"></div>
+        <div class="goto-today">
+          <div class="goto">
+            <input type="text" placeholder="mm/yyyy" class="date-input" />
+            <button class="goto-btn">Go</button>
+          </div>
+          <button class="today-btn">Today</button>
+        </div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="today-date">
+        <div class="event-day">wed</div>
+        <div class="event-date">12th december 2022</div>
+      </div>
+      <div class="events"></div>
+    
+    </div>
+    
+  </div>
+</div>
+
+
+<script>
+  const calendar = document.querySelector(".calendar"),
+  date = document.querySelector(".date"),
+  daysContainer = document.querySelector(".days"),
+  prev = document.querySelector(".prev"),
+  next = document.querySelector(".next"),
+  todayBtn = document.querySelector(".today-btn"),
+  gotoBtn = document.querySelector(".goto-btn"),
+  dateInput = document.querySelector(".date-input"),
+  eventDay = document.querySelector(".event-day"),
+  eventDate = document.querySelector(".event-date"),
+  eventsContainer = document.querySelector(".events"),
+  addEventBtn = document.querySelector(".add-event"),
+  addEventWrapper = document.querySelector(".add-event-wrapper "),
+  addEventCloseBtn = document.querySelector(".close "),
+  addEventTitle = document.querySelector(".event-name "),
+  addEventFrom = document.querySelector(".event-time-from "),
+  addEventTo = document.querySelector(".event-time-to "),
+  addEventSubmit = document.querySelector(".add-event-btn ");
+
+  const tableData = <%- JSON.stringify(tableData) %>;
+
+
+  const publicHolidays = <%- JSON.stringify(publicHolidays) %>;
+        // console.log('publicHoliday', publicHolidays)        
+      const getPublicHoliday = (timesheetWorkDate) => {
+        
+        let holidayName = '';
+        publicHolidays.forEach(date => {
+          const holidayMonthDay = date.holiday_date.split('T')[0].slice(5); // Extract month and day
+          const workMonthDay = timesheetWorkDate.slice(5); // Extract month and day
+          // console.log("Checking holiday:", holidayMonthDay, date.holiday_name);
+
+          if (holidayMonthDay === workMonthDay) {
+            holidayName = date.holiday_name;
+          }
+        });
+        return holidayName;
+      };
+
+let today = new Date();
+let activeDay;
+let month = today.getMonth();
+let year = today.getFullYear();
+
+const months = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+// const timesheetArr = [
+//   {
+//     day: 13,
+//     month: 11,
+//     year: 2022,
+//     events: [
+//       {
+//         title: "Event 1 lorem ipsun dolar sit genfa tersd dsad ",
+//         time: "10:00 AM",
+//       },
+//       {
+//         title: "Event 2",
+//         time: "11:00 AM",
+//       },
+//     ],
+//   },
+// ];
+
+
+const formatWorkDate = (workDate) => {
+          // Manually parse the date string
+          const dateParts = workDate.split(' '); 
+
+          const monthMap = {
+            Jan: '01',
+            Feb: '02',
+            Mar: '03',
+            Apr: '04',
+            May: '05',
+            Jun: '06',
+            Jul: '07',
+            Aug: '08',
+            Sep: '09',
+            Oct: '10',
+            Nov: '11',
+            Dec: '12'
+          };
+
+          // Convert the month to a number
+          const month = monthMap[dateParts[0]];
+
+          // Remove the comma from the day
+          const day = dateParts[1].replace(',', '');
+
+          // Extract the year
+          const year = dateParts[2];
+
+          // Return the day, month, and year separately
+          return { day, month, year };
+        }
+
+
+
+
+// const timesheetArr = [];
+const timesheetArr = [];
+getTimesheetsEntries()
+console.log(timesheetArr);
+
+
+
+function storeSelectedMonth() {
+  localStorage.setItem("selectedMonth", month);
+}
+
+function storeSelectedYear() {
+  localStorage.setItem("selectedYear", year);
+}
+
+// Update the event listeners to store the month
+
+// document.querySelector('#addTimesheetBtn').addEventListener("click", () => {
+//   storeSelectedMonth();
+//   storeSelectedYear(); 
+// });
+
+document.querySelector('#addLeaveBtn').addEventListener("click", () => {
+  storeSelectedMonth();
+  storeSelectedYear(); 
+});
+
+document.querySelector('#addDayLeaveBtn').addEventListener("click", () => {
+  storeSelectedMonth();
+  storeSelectedYear(); 
+});
+
+//function to add days in days with class day and prev-date next-date on previous month and next month days and active on today
+function initCalendar() {
+  
+  const storedMonth = localStorage.getItem("selectedMonth");
+  const storedYear = localStorage.getItem("selectedYear");
+
+  if (storedMonth) {
+    month = parseInt(storedMonth, 10);
+  }
+  if (storedYear) {
+    year = parseInt(storedYear, 10);
+  }
+
+
+
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const prevLastDay = new Date(year, month, 0);
+  const prevDays = prevLastDay.getDate();
+  const lastDate = lastDay.getDate();
+  const day = firstDay.getDay();
+  const nextDays = 7 - lastDay.getDay() - 1;
+
+  console.log("previous", prevDays )
+  console.log("next", nextDays)
+
+  
+
+ 
+
+
+  date.innerHTML = months[month] + " " + year;
+
+  let days = "";
+
+   // Function to determine timesheet type
+   const getTimesheetType = (tsType) => {
+    if (tsType === 'planned-leave') return 'Leave';
+    if (tsType === 'day-leave') return 'Day-off';
+    return '';
+  };
+
+  // const storedPrevDay = localStorage.getItem("prevDays");
+  // const storedNextDay = localStorage.getItem("nextDays");
+
+  // let prev_days = day
+  // let next_days = nextDays
+
+  // if (storedPrevDay !== null && storedPrevDay !== undefined) {
+  //   prev_days = parseInt(storedPrevDay, 10);
+  // }
+  // if (storedNextDay !== null && storedNextDay !== undefined) {
+  //   next_days = parseInt(storedNextDay, 10);
+  // }
+
+
+  // localStorage.setItem("prevDays", day);
+  // localStorage.setItem("nextDays", nextDays);
+
+  
+
+  
+
+  
+        const publicHolidays = <%- JSON.stringify(publicHolidays) %>;
+        console.log('publicHoliday', publicHolidays)        
+        const getPublicHoliday = (timesheetWorkDate) => {
+          
+          let holidayName = '';
+          publicHolidays.forEach(date => {
+            const holidayMonthDay = date.holiday_date.split('T')[0].slice(5); // Extract month and day
+            const workMonthDay = timesheetWorkDate.slice(5); // Extract month and day
+            // console.log("Checking holiday:", holidayMonthDay, date.holiday_name);
+
+            if (holidayMonthDay === workMonthDay) {
+              holidayName = date.holiday_name;
+            }
+          });
+          return holidayName;
+        };
+
+
+        // console.log('gasgasgasgas', getPublicHoliday('2024-03-11'));
+  
+
+     // Previous month days
+  for (let x =  day; x > 0; x--) {
+    let event = false;
+    let timesheetType = '';
+    let holidayName = '';
+
+    timesheetArr.forEach(eventObj => {
+      if (
+        eventObj.day === prevDays - x + 1 &&
+        eventObj.month === (month === 0 ? 12 : month) &&
+        eventObj.year === (month === 0 ? year - 1 : year)
+      ) {
+        event = true;
+        timesheetType = getTimesheetType(eventObj.events[0].tsType);
+      }
+    });
+
+    // Check for public holiday
+    const workDateStr = `${(month === 0 ? year - 1 : year)}-${(month === 0 ? 12 : month).toString().padStart(2, '0')}-${(prevDays - x + 1).toString().padStart(2, '0')}`;
+    holidayName = getPublicHoliday(workDateStr);
+
+    if(event) {
+      days += `<div class="day event prev-date ${holidayName ? 'holiday' : ''}">${event ? ` <span style='font-size: 0.5rem;  font-weight:bold; position: absolute; top: 1px; left: 2px;'>${timesheetType}</span>` : ''}${prevDays - x + 1}${holidayName ? `<span class="holiday-name">${holidayName}</span>` : ''}${holidayName ? `<span class="holiday-indicator">H</span>` : ''}</div>`;
+
+    } else {
+      days += `<div class="day prev-date ${holidayName ? 'holiday' : ''}">${prevDays - x + 1}${holidayName ? `<span class="holiday-name">${holidayName}</span>` : ''}${holidayName ? `<span class="holiday-indicator">H</span>` : ''}</div>`;
+
+    }
+
+
+  }
+
+  for (let i = 1; i <= lastDate; i++) {
+    // Check if event is present on that day
+    let event = false;
+    let status = '';
+    let tsId = 0;
+    let timesheetType = '';
+    let workDate = '';
+
+    // Check for public holiday
+    const workDateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
+    const holidayName = getPublicHoliday(workDateStr);
+    const isHoliday = holidayName !== '';
+
+    timesheetArr.forEach((eventObj, index) => {
+      if (
+        eventObj.day === i &&
+        eventObj.month === month + 1 &&
+        eventObj.year === year
+      ) {
+        event = true;
+        status = eventObj.events[0].status; 
+        tsId = eventObj.events[0].tsId;
+        workDate = eventObj.events[0].tsWorkDate;
+        timesheetType = () => {
+          if (eventObj.events[0].tsType == 'planned-leave') {
+            return 'Leave';
+          } else if (eventObj.events[0].tsType == 'day-leave') {
+            return 'Day-off';
+          } else {
+            return '';
+          }
+        };
+        title = eventObj.events[0].title;
+      }
+    });
+    if (
+      i === new Date().getDate() &&
+      year === new Date().getFullYear() &&
+      month === new Date().getMonth()
+    ) {
+      activeDay = i;
+      getActiveDay(i);
+      updateEvents(i);
+      if (event) {
+        days += `<div class="day today active event ${status} ${isHoliday && 'holiday'}" title='${isHoliday && holidayName}' workDate='${workDate}' tsId='${tsId}' data-date='${i}' tsType='${timesheetType()}' status='${status}'> 
+            <span style='font-size: 0.5rem; font-weight:bold; position: absolute; top: 1px; left: 2px;'>${timesheetType()}</span>
+            ${i}
+            ${isHoliday ? `<span class="holiday-name">${holidayName}</span>` : ''}
+            ${isHoliday ? `<span class="holiday-indicator">H</span>` : ''}
+          </div>`;
+      } else {
+        days += `<div class="day ${isHoliday && 'holiday'}" title='${isHoliday && holidayName}' data-date='${i}'>
+          ${i}
+          ${isHoliday ? `<span class="holiday-name">${holidayName}</span>` : ''}
+          ${isHoliday ? `<span class="holiday-indicator">H</span>` : ''}
+          </div>`;
+      }
+    } else {
+      if (event) {
+        days += `<div class="day event ${status} ${isHoliday && 'holiday'}" title='${isHoliday && holidayName}' workDate='${workDate}' tsId='${tsId}' data-date='${i}' tsType='${timesheetType()}' status='${status}'>
+            <span style='font-size: 0.5rem; font-weight:bold; position: absolute; top: 1px; left: 2px;'>${timesheetType()}</span>
+            ${i}
+            ${isHoliday ? `<span class="holiday-name">${holidayName}</span>` : ''}
+            ${isHoliday ? `<span class="holiday-indicator">H</span>` : ''}
+          </div>`;
+      } else {
+        days += `<div class="day ${isHoliday && 'holiday'}" title='${isHoliday && holidayName}' data-date='${i}'>${i}${isHoliday ? `<span class="holiday-name">${holidayName}</span>` : ''}${isHoliday ? `<span class="holiday-indicator">H</span>` : ''}</div>`;
+      }
+    }
+  }
+
+  // Next month days
+  for (let j = 1; j <=  nextDays ; j++) {
+    let event = false;
+    let timesheetType = '';
+    let holidayName = '';
+    let isHoliday = false; // Added to check if it's a holiday
+    timesheetArr.forEach(eventObj => {
+      if (
+        eventObj.day === j &&
+        (eventObj.month === (month + 2 > 12 ? 1 : month + 2)) &&
+        eventObj.year === (month === 11 ? year + 1 : year)
+      ) {
+        event = true;
+        timesheetType = getTimesheetType(eventObj.events[0].tsType);
+      }
+    });
+
+    // Check for public holiday
+    const workDateStr = `${(month === 11 ? year + 1 : year)}-${(month + 2 > 12 ? 1 : month + 2).toString().padStart(2, '0')}-${j.toString().padStart(2, '0')}`;
+    holidayName = getPublicHoliday(workDateStr);
+    isHoliday = holidayName !== ''; // Check if it's a holiday
+
+    if(event){
+      days += `<div class="day event next-date ${isHoliday ? 'holiday' : ''}">${event ? ` <span style='font-size: 0.5rem;  font-weight:bold; position: absolute; top: 1px; left: 2px;'>${timesheetType}</span>` : ''}${j}${isHoliday ? `<span class="holiday-name">${holidayName}</span>` : ''}${isHoliday ? `<span class="holiday-indicator">H</span>` : ''}</div>`;
+
+    } else {
+      days += `<div class="day next-date ${isHoliday ? 'holiday' : ''}">${j}${isHoliday ? `<span class="holiday-name">${holidayName}</span>` : ''}${isHoliday ? `<span class="holiday-indicator">H</span>` : ''}</div>`;
+
+    }
+  }
+
+
+
+
+
+
+
+
+  daysContainer.innerHTML = days;
+  addListner();
+  // localStorage.removeItem("selectedMonth");
+ 
+}
+
+//function to add month and year on prev and next button
+function prevMonth() {
+  month--;
+  if (month < 0) {
+    month = 11;
+    year--;
+  }
+   localStorage.setItem("selectedMonth", month);
+   localStorage.setItem("selectedYear", year);
+  initCalendar();
+
+}
+
+function nextMonth() {
+  month++;
+  if (month > 11) {
+    month = 0;
+    year++;
+
+  }
+   localStorage.setItem("selectedMonth", month);
+   localStorage.setItem("selectedYear", year);
+  initCalendar();
+}
+
+prev.addEventListener("click", prevMonth);
+next.addEventListener("click", nextMonth);
+
+initCalendar();
+
+//function to add active on day
+
+      let selectedTimesheetIds = [];
+      let isMarkingEnabled = false;
+
+      // Function to toggle marking mode
+      function toggleMarkUnmark() {
+        const btn = document.getElementById('mark-unmark-btn');
+        isMarkingEnabled = !isMarkingEnabled;
+
+        if (isMarkingEnabled) {
+          btn.textContent = 'Unmark Timesheet';
+          btn.classList.remove('btn-primary');
+          btn.classList.add('btn-secondary');
+          updateSelectedTimesheetInput();
+              updateSelectedCount();
+              toggleFormVisibility();
+          
+        } else {
+          btn.textContent = 'Mark Timesheet';
+          btn.classList.remove('btn-secondary');
+          btn.classList.add('btn-primary');
+          clearSelections();
+          
+          
+        }
+        toggleFormVisibility();
+      }
+
+      // Function to clear selections
+      function clearSelections() {
+        selectedTimesheetIds = [];
+        document.querySelectorAll(".day.selected").forEach(day => day.classList.remove("selected"));
+        updateSelectedTimesheetInput();
+        updateSelectedCount();
+      }
+
+      function updateSelectedTimesheetInput() {
+        const selectedTimesheetInput = document.querySelector("#selectedTimesheetIds");
+        selectedTimesheetInput.value = selectedTimesheetIds.join(",");
+      }
+
+      function updateSelectedCount() {
+        const selectedCount = document.querySelector("#selectedCount");
+        selectedCount.style.display = isMarkingEnabled && selectedTimesheetIds.length > 0 ? "block" : "none";
+
+        selectedCount.innerHTML = `<i class="fas fa-check-circle "></i> ${selectedTimesheetIds.length}`;
+      }
+
+      function toggleFormVisibility() {
+        const formContainer = document.querySelector("#timesheetFormContainer");
+        formContainer.style.display = isMarkingEnabled && selectedTimesheetIds.length > 0 ? "block" : "none";
+      }
+
+     
+
+
+function addListner() {
+  const days = document.querySelectorAll(".day");
+  const newTimesheetButton = document.querySelector('#addTimesheetBtn');
+  const plannedLeaveButton = document.querySelector('#addLeaveBtn');
+  const dayLeaveButton =  document.querySelector('#addDayLeaveBtn');
+
+  
+  
+
+  days.forEach((day) => {
+
+     
+          day.addEventListener("click", (e) => {
+            if (!isMarkingEnabled) return;
+
+            const tsId = e.target.getAttribute("tsId");
+            const status = e.target.getAttribute("status");
+
+            if (status === 'pending' || status === 'draft') {
+              if (selectedTimesheetIds.includes(tsId)) {
+                selectedTimesheetIds = selectedTimesheetIds.filter(id => id !== tsId);
+                e.target.classList.remove("selected");
+              } else {
+                selectedTimesheetIds.push(tsId);
+                e.target.classList.add("selected");
+              }
+
+              console.log("ASDASDASASD", selectedTimesheetIds);
+              updateSelectedTimesheetInput();
+              updateSelectedCount();
+              toggleFormVisibility();
+
+
+            }
+          });
+       
+
+      
+    
+   
+
+    day.addEventListener("dblclick", (e)=> {
+      const clickedDay = e.target.getAttribute("data-date");
+      const tsType = e.target.getAttribute("tsType");
+      const status = e.target.getAttribute("status");
+      const tsId = e.target.getAttribute("tsId");
+      const workDate = e.target.getAttribute("workDate");
+      const selectedDate = `${year}-${(month + 1).toString().padStart(2, '0')}-${clickedDay.toString().padStart(2, '0')}`;
+
+
+      alert(`tsType: ${tsType}, status: ${status}, tsId: ${tsId}, workDate: ${workDate}`);
+
+
+    
+ 
+
+      if(tsType == '' && status == 'pending' || status == 'draft') {
+        window.location.href = `/timesheets/edit/${tsId}?work_date=${workDate.replace(/(\w+) (\d+), (\d+)/, function(match, month, day, year) { return `${year}-${(new Date(Date.parse(`${month} 1, ${year}`)).getMonth() + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`; })}`;
+      } else if(tsType == '' && status == 'approved') {
+        window.location.href = `/timesheets/${tsId}`
+      } else if (!tsType || !status || !tsId) {
+        window.location.href = `/timesheetEntry?date=${selectedDate}`;
+      }
+
+      if (status === 'pending' || status === 'draft') {
+        if (selectedTimesheetIds.includes(tsId)) {
+          selectedTimesheetIds = selectedTimesheetIds.filter(id => id !== tsId);
+          e.target.classList.remove("selected");
+          console.log("selectedTimesheetIds0", selectedTimesheetIds);
+        } else {
+          selectedTimesheetIds.push(tsId);
+          e.target.classList.add("selected");
+        }
+        updateSelectedTimesheetInput();
+        toggleFormVisibility();
+      }
+
+    })
+
+
+
+    
+    day.addEventListener("click", (e) => {
+      const clickedDay = e.target.getAttribute("data-date");
+      getActiveDay(clickedDay);
+      updateEvents(Number(clickedDay));
+      activeDay = Number(clickedDay);
+      //remove active
+      days.forEach((day) => {
+        day.classList.remove("active");
+      });
+
+      
+      //if clicked prev-date or next-date switch to that month
+      if (e.target.classList.contains("prev-date")) {
+        prevMonth();
+        //add active to clicked day after month is changed
+        setTimeout(() => {
+          //add active where no prev-date or next-date
+          const days = document.querySelectorAll(".day");
+          days.forEach((day) => {
+            if (
+              !day.classList.contains("prev-date") &&
+              day.innerHTML === clickedDay
+            ) {
+              day.classList.add("active");
+              // Update the date in the anchor elements
+              updateDateInAnchors(clickedDay);
+            }
+          });
+        }, 100);
+      } else if (e.target.classList.contains("next-date")) {
+        nextMonth();
+        //add active to clicked day after month is changed
+        setTimeout(() => {
+          const days = document.querySelectorAll(".day");
+          days.forEach((day) => {
+            if (
+              !day.classList.contains("next-date") &&
+              day.innerHTML === clickedDay
+            ) {
+              day.classList.add("active");
+              // Update the date in the anchor elements
+              updateDateInAnchors(clickedDay);
+            }
+          });
+        }, 100);
+      } else {
+        e.target.classList.add("active");
+        // Update the date in the anchor elements
+        updateDateInAnchors(clickedDay);
+      }
+    });
+  });
+}
+
+function updateDateInAnchors(date) {
+  const newTimesheetButton = document.querySelector('#addTimesheetBtn');
+  const plannedLeaveButton = document.querySelector('#addLeaveBtn');
+  const dayLeaveButton =  document.querySelector('#addDayLeaveBtn');
+  const selectedDate = `${year}-${(month + 1).toString().padStart(2, '0')}-${date.toString().padStart(2, '0')}`;;
+  newTimesheetButton.href = `/timesheetEntry?date=${selectedDate}`;
+  plannedLeaveButton.href = `/plannedLeave?date=${selectedDate}`;
+  dayLeaveButton.href = `/timesheets/leaveDay/add?date=${selectedDate}`;
+}
+
+
+
+todayBtn.addEventListener("click", () => {
+  today = new Date();
+  month = today.getMonth();
+  year = today.getFullYear();
+  localStorage.setItem("selectedMonth", month);
+   localStorage.setItem("selectedYear", year);
+  initCalendar();
+});
+
+dateInput.addEventListener("input", (e) => {
+  dateInput.value = dateInput.value.replace(/[^0-9/]/g, "");
+  if (dateInput.value.length === 2) {
+    dateInput.value += "/";
+  }
+  if (dateInput.value.length > 7) {
+    dateInput.value = dateInput.value.slice(0, 7);
+  }
+  if (e.inputType === "deleteContentBackward") {
+    if (dateInput.value.length === 3) {
+      dateInput.value = dateInput.value.slice(0, 2);
+    }
+  }
+});
+
+gotoBtn.addEventListener("click", gotoDate);
+
+function gotoDate() {
+  console.log("here");
+  const dateArr = dateInput.value.split("/");
+  
+  if (dateArr.length === 2) {
+    if (dateArr[0] > 0 && dateArr[0] < 13 && dateArr[1].length === 4) {
+      month = dateArr[0] - 1;
+      year = dateArr[1];
+
+      localStorage.setItem("selectedMonth", month);
+      localStorage.setItem("selectedYear", year);
+
+      initCalendar();
+      return;
+    }
+  }
+  alert("Invalid Date");
+}
+
+
+
+
+//function get active day day name and date and update eventday eventdate
+function getActiveDay(date) {
+  const workDateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${date.toString().padStart(2, '0')}`;
+  const holidayName = getPublicHoliday(workDateStr);
+  
+  eventDate.innerHTML = `${date} ${months[month]} ${year} <span class="bold" style="font-size: 0.8rem; font-weight: bold; position: absolute; top: 40px;">${holidayName ? holidayName : ''}</span>`;
+}
+
+
+//function update events when a day is active
+function updateEvents(date) {
+  let events = "";
+  timesheetArr.forEach((event) => {
+    if (
+      date === event.day &&
+      month + 1 === event.month &&
+      year === event.year
+    ) {
+
+      // title: title,
+      //       tsType: tsType,
+      //       timeStart: entry.time_start,
+      //       timeFinished: entry.time_finish,
+      //       timeTotal: entry.time_total,
+      //       timeAccrued: entry.time_accrued,
+      //       timeTil: entry.time_til,
+      //       timeLeave: entry.time_leave,
+      //       timeOvertime: entry.time_overtime,
+      //       timeFlexi: entry.time_flexi,
+      //       timeTil: entry.time_til,
+      //       rdo: entry.rwe_day,
+      //       comment: entry.t_comment,
+      //       status: entry.status === 'entered' ? 
+
+      
+      event.events.forEach((event) => {
+
+       
+
+          events = `<div class="event ${event.status}">
+            <div class="title mt-2">
+             
+              <h1 class="event-title">${event.title}</h1>
+              <h3 class="event-title">${event.status}</h3>
+            </div>
+           
+            
+        </div>
+        <div class="event" >
+  <div class="event-time" style='padding-bottom: 50px; '>
+    ${event.timeStart ? `<span class="event-time time-duration">${event.timeStart}-${event.timeFinished}</span>` : ''}
+    ${event.timeTotal ? `<span class="event-time"><span>Total:</span> ${parseFloat(event.timeTotal).toFixed(2)} Hour/s </span>` : ''}
+
+    ${event.timeTil ? `<span class="event-time"><span>TIL:</span> ${parseFloat(event.timeTil).toFixed(2)} Hour/s </span>` : ''}
+    ${event.timeFlexi ? `<span class="event-time"><span>FLEXI:</span> ${parseFloat(event.timeFlexi).toFixed(2)} Hour/s </span>` : ''}
+    ${event.timeOvertime ? `<span class="event-time"><span>OVERTIME:</span> ${parseFloat(event.timeOvertime).toFixed(2)} Hour/s </span>` : ''}
+    ${event.timeLeave ? `<span class="event-time"><span>LEAVE:</span> ${parseFloat(event.timeLeave).toFixed(2)} Hour/s </span>` : ''}
+    ${event.rdo ? `<span class="event-time"><span>RDO:</span> ${event.rdo} </span>` : ''}
+    <hr />
+    ${true? `<span class="event-time comment"><span>Comment:</span> <div class="comment-box">${event.comment?  event.comment : ''}</div> </span>` : ''}
+  </div>
+</div>
+<div class="d-flex justify-content-end align-items-center position-absolute bottom-0 right-0 w-100 pb-3 pr-5 gap-2" style='backdrop-filter: blur(10px); padding-right: 20px;'>
+${
+  event.tsType == 'normal-timesheet'  && event.status != 'approved' ?
+  
+      `
+      <form action="/timesheets/submitTimesheetStatus/${event.tsId}" method='post' style='margin-right: 30px; position: absolute; left: 0;'>
+        <button type="submit" class="btn btnprimary mt-2" title="Submit Timesheet"><i class="fas fa-check"></i></button>
+            
+        <button type="submit" class="btn btnsecondary mt-2" onclick="document.getElementById('draft').value='true';" title="Save as Draft"><i class="fas fa-save"></i></button>
+        <input type="hidden" id="draft" name="draft" value="false">  
+      </form>
+      
+      
+      <a href ="/timesheets/edit/${event.tsId}?work_date=${event.tsWorkDate.replace(/(\w+) (\d+), (\d+)/, function(match, month, day, year) { return `${year}-${(new Date(Date.parse(`${month} 1, ${year}`)).getMonth() + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`; })}" class="add-event" style='position:initial' >
+      <i class="fas fa-edit"></i>
+      </a>
+   
+      ` : ``   
+}
+
+${
+  event.tsType == 'normal-timesheet'  && event.status == 'approved' ?  
+
+ 
+
+      `<a href ="/timesheets/${event.tsId}" class="add-event" style='position:initial' >
+      <i class="fas fa-eye"></i>
+      </a>` : ''
+      
+}
+
+${
+      event.status != 'approved' ? 
+      `<a href ="/deleteTimesheet/${event.tsId}?workDate=${event.tsWorkDate.replace(/(\w+) (\d+), (\d+)/, function(match, month, day, year) { return `${year}-${(new Date(Date.parse(`${month} 1, ${year}`)).getMonth() + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`; })}" class="add-event" style="border: solid red; color:red; position:initial">
+      <i class="fas fa-trash"></i>
+      </a>` : ''
+}
+      </div>
+    
+        
+        `;
+      });
+    }
+
+  });
+
+  
+  
+
+  if (events === "") {
+    // Assuming selectedDate is available in the context and formatted as 'YYYY-MM-DD'
+    let selected_date = `${year}-${(month + 1).toString().padStart(2, '0')}-${date.toString().padStart(2, '0')}`;
+    console.log("SELECTED DAE", selected_date);
+    const userSchedule = [<%=userSchedule[0] && userSchedule[0].paid_hours%>]
+    console.log("ASDASDASASDAS", userSchedule )
+    const userScheduleEntry = userSchedule.find(entry => entry.date === selected_date)%>;
+
+    events = `<div class="no-event d-flex flex-column">
+      <h3>No Entry</h3>
+     
+      <div id="quickEntryForm" style="display: none; margin-top: 10px;">
+        <form action="/timesheets/quickEntry" method="post">
+          <div class="">
+            <label id="totalTime" class="form-label text-sm" style="font-size: 14px">Schedule Hours: </label>
+            <input type="hidden" id="scheduleHours" name="scheduleHour" value="0" />
+            <input type="hidden" id="date" name="date" value="${selected_date}" />
+            <input type="hidden" id="defaultTimeStart" name="defaultTimeStart" value="<%=userSchedule[0] && userSchedule[0].default_time_start %>" />
+            <input type="hidden" id="scheduleHours" name="defaultTimeBreak" value="<%=userSchedule[0] && userSchedule[0].default_time_break%>" />
+            <input type="hidden" id="lunchTime" name="lunchTime" value="30" />
+            
+            </div>
+        
+          <div class="mb-3">
+            <label for="comment" class="form-label text-sm" style="font-size: 14px">Comment</label>
+            <textarea class="form-control" id="comment" name="comment" rows="3" style="width: 100%; height: 100px; font-size: 14px;"></textarea>
+          </div>
+          <input type="hidden" id="draft" name="draft" value="true" />
+          <button type="submit" class="btn btn-primary" name="action" value="save" onclick="document.getElementById('draft').value='false';" style="height: 30px; font-size: 14px;">Save</button>
+          <button type="submit" class="btn btn-secondary" name="action" value="draft" onclick="document.getElementById('draft').value='true';" style="height: 30px; font-size: 14px;">Save as Draft</button>
+        </form>
+      </div>
+       <button class="btn btn-primary mt-2 w-50" id="quick-entry-btn" onclick="showQuickEntryForm('${selected_date}')">Add Quick Entry</button>
+       <button class="btn btn-primary mt-2 w-50" id="more-entry-bnt" id="addTimesheetBtn" onclick="handleAddNewTimesheet('${selected_date}')">Advance Entry</button>
+    </div>`;
+  }
+  eventsContainer.innerHTML = events;
+}
+
+
+
+
+
+// //function to add event
+// addEventBtn.addEventListener("click", () => {
+//   addEventWrapper.classList.toggle("active");
+// });
+
+// addEventCloseBtn.addEventListener("click", () => {
+//   addEventWrapper.classList.remove("active");
+// });
+
+// document.addEventListener("click", (e) => {
+//   if (e.target !== addEventBtn && !addEventWrapper.contains(e.target)) {
+//     addEventWrapper.classList.remove("active");
+//   }
+// });
+
+//allow 50 chars in eventtitle
+// addEventTitle.addEventListener("input", (e) => {
+//   addEventTitle.value = addEventTitle.value.slice(0, 60);
+// });
+
+//allow only time in eventtime from and to
+// addEventFrom.addEventListener("input", (e) => {
+//   addEventFrom.value = addEventFrom.value.replace(/[^0-9:]/g, "");
+//   if (addEventFrom.value.length === 2) {
+//     addEventFrom.value += ":";
+//   }
+//   if (addEventFrom.value.length > 5) {
+//     addEventFrom.value = addEventFrom.value.slice(0, 5);
+//   }
+// });
+
+// addEventTo.addEventListener("input", (e) => {
+//   addEventTo.value = addEventTo.value.replace(/[^0-9:]/g, "");
+//   if (addEventTo.value.length === 2) {
+//     addEventTo.value += ":";
+//   }
+//   if (addEventTo.value.length > 5) {
+//     addEventTo.value = addEventTo.value.slice(0, 5);
+//   }
+// });
+
+//function to add event to timesheetArr
+// addEventSubmit.addEventListener("click", () => {
+//   const eventTitle = addEventTitle.value;
+//   const eventTimeFrom = addEventFrom.value;
+//   const eventTimeTo = addEventTo.value;
+//   if (eventTitle === "" || eventTimeFrom === "" || eventTimeTo === "") {
+//     alert("Please fill all the fields");
+//     return;
+//   }
+
+//   //check correct time format 24 hour
+//   const timeFromArr = eventTimeFrom.split(":");
+//   const timeToArr = eventTimeTo.split(":");
+//   if (
+//     timeFromArr.length !== 2 ||
+//     timeToArr.length !== 2 ||
+//     timeFromArr[0] > 23 ||
+//     timeFromArr[1] > 59 ||
+//     timeToArr[0] > 23 ||
+//     timeToArr[1] > 59
+//   ) {
+//     alert("Invalid Time Format");
+//     return;
+//   }
+
+//   const timeFrom = convertTime(eventTimeFrom);
+//   const timeTo = convertTime(eventTimeTo);
+
+//   //check if event is already added
+//   let eventExist = false;
+//   timesheetArr.forEach((event) => {
+//     if (
+//       event.day === activeDay &&
+//       event.month === month + 1 &&
+//       event.year === year
+//     ) {
+//       event.events.forEach((event) => {
+//         if (event.title === eventTitle) {
+//           eventExist = true;
+//         }
+//       });
+//     }
+//   });
+//   if (eventExist) {
+//     alert("Event already added");
+//     return;
+//   }
+//   const newEvent = {
+//     title: eventTitle,
+//     time: timeFrom + " - " + timeTo,
+//   };
+//   console.log(newEvent);
+//   console.log(activeDay);
+//   let eventAdded = false;
+//   if (timesheetArr.length > 0) {
+//     timesheetArr.forEach((item) => {
+//       if (
+//         item.day === activeDay &&
+//         item.month === month + 1 &&
+//         item.year === year
+//       ) {
+//         item.events.push(newEvent);
+//         eventAdded = true;
+//       }
+//     });
+//   }
+
+//   if (!eventAdded) {
+//     timesheetArr.push({
+//       day: activeDay,
+//       month: month + 1,
+//       year: year,
+//       events: [newEvent],
+//     });
+//   }
+
+//   console.log(timesheetArr);
+//   addEventWrapper.classList.remove("active");
+//   addEventTitle.value = "";
+//   addEventFrom.value = "";
+//   addEventTo.value = "";
+
+//   //select active day and add event class if not added
+//   const activeDayEl = document.querySelector(".day.active");
+//   if (!activeDayEl.classList.contains("event")) {
+//     activeDayEl.classList.add("event");
+//   }
+// });
+
+
+
+
+
+//function to get events from local storage
+function getTimesheets() {
+  //check if events are already saved in local storage then return event else nothing
+  if (localStorage.getItem("events") === null) {
+    return;
+  }
+  timesheetArr.push(...JSON.parse(localStorage.getItem("events")));
+}
+
+
+
+
+function getTimesheetsEntries() {
+  if (!tableData || tableData.length === 0) {
+    return;
+
+    // {
+//     day: 13,
+//     month: 11,
+//     year: 2022,
+//     events: [
+//       {
+//         title: "Event 1 lorem ipsun dolar sit genfa tersd dsad ",
+//         time: "10:00 AM",
+//       },
+//       {
+//         title: "Event 2",
+//         time: "11:00 AM",
+//       },
+//     ],
+//   },
+
+  } else {
+    console.log("table DATA", tableData);
+    tableData.forEach(entry => {
+      let entries = {};
+
+
+      if(entry.id !== null){
+
+        let title = '';
+        let tsType = '';
+        if(entry.activity == 'Approved Leave') {
+          title = 'Planned Leave';
+          tsType = 'planned-leave';
+        } else if (entry.activity == 'RDO Leave' || entry.activity == 'Day Off Using Mix Time' || entry.activity == 'Day Off Using TIL Time' || entry.activity == 'Til Variance Leave' ||  entry.activity == 'Flexi Variance Leave' ||  entry.activity == 'Mix Variance Leave') {
+          title = 'Leave for a Day';
+          tsType = 'day-leave';
+        } else {
+          title = 'Normal Timesheet';
+          tsType = 'normal-timesheet';
+        }
+
+
+
+
+
+        entries = {
+        
+        day: parseInt(formatWorkDate(entry.work_date).day, 10),
+        month: parseInt(formatWorkDate(entry.work_date).month, 10),
+        year: parseInt(formatWorkDate(entry.work_date).year, 10),
+        events: [
+          {
+            tsWorkDate: entry.work_date,
+            tsId: entry.id,
+            title: title,
+            tsType: tsType,
+            timeStart: entry.time_start,
+            timeFinished: entry.time_finish,
+            timeTotal: entry.time_total,
+            timeAccrued: entry.time_accrued,
+            timeTil: entry.time_til,
+            timeLeave: entry.time_leave,
+            timeOvertime: entry.time_overtime,
+            timeFlexi: entry.time_flexi,
+            rdo: entry.rwe_day,
+            comment: entry.comment,
+            holiday: entry.holiday_name,
+            isWeekend: entry.is_weekend,
+            status: entry.status === 'entered' ? 'pending' : entry.status === 'reject' ? 'rejected' : entry.status === 'approved' ? 'approved' :  entry.status === 'draft' ? 'draft' : '',
+          },
+        ],
+      }
+
+      } 
+      
+
+      // const formattedEntry = {
+      //   id: entry.id,
+      //   workDate: entry.work_date,
+      //   timeStart: entry.time_start,
+      //   timeFinish: entry.time_finish,
+      //   timeTotal: entry.time_total,
+      //   timeAccrued: entry.time_accrued,
+      //   timeTil: entry.time_til,
+      //   timeLeave: entry.time_leave,
+      //   timeOvertime: entry.time_overtime,
+      //   timeCommSvs: entry.time_comm_svs,
+      //   comment: entry.comment,
+      //   locationId: entry.location_id,
+      //   activity: entry.activity,
+      //   notes: entry.notes,
+      //   status: entry.status,
+      //   rweDay: entry.rwe_day,
+      //   holidayName: entry.holiday_name,
+      //   isWeekend: entry.is_weekend
+      // };
+      timesheetArr.push(entries);
+    });
+  }
+}
+
+
+
+getTimesheetsEntries();
+console.log(timesheetArr)
+
+
+
+
+
+
+
+function convertTime(time) {
+  //convert time to 24 hour format
+  let timeArr = time.split(":");
+  let timeHour = timeArr[0];
+  let timeMin = timeArr[1];
+  let timeFormat = timeHour >= 12 ? "PM" : "AM";
+  timeHour = timeHour % 12 || 12;
+  time = timeHour + ":" + timeMin + " " + timeFormat;
+  return time;
+}
+
+
+
+// fetching functions
+function getDayOfWeekName(dayOfWeek) {
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      return days[dayOfWeek];
+    }
+
+
+    function getPayPeriods(startDate, endDate, scheduleDays, paidHours, selectedDate) {
+    let currentDate = new Date(startDate);
+    let i = 0;
+    let allDateSchedules = [];
+
+    while (currentDate <= endDate) {
+        const dayOfWeek = currentDate.getDay();
+
+        if (scheduleDays.includes(getDayOfWeekName(dayOfWeek))) {
+            let paidHour = 0;
+
+            if (i < paidHours.length) {
+                paidHour = paidHours[i];
+                i = (i + 1) % paidHours.length; // Cycle through paid hours
+            }
+
+            console.log(new Date(currentDate).toISOString().split("T")[0] )
+
+            if (selectedDate == new Date(currentDate).toISOString().split("T")[0]) {
+              console.log(`danklsjfnasdkfnaskldjnfklasdfnaskdjfnasdjklfnasjkldfnaskldfjnaskldjn`)
+
+              allDateSchedules.push({
+              date: new Date(currentDate).toISOString().split("T")[0],
+              paidHour: paidHour,
+            })};
+        }
+
+
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return allDateSchedules;
+}
+
+    // Function to get paid hours for the selected date
+    function getPaidHoursForDate(selectedDate) {
+      const userSchedules = <%-userSchedule ? JSON.stringify(userSchedule): [] %>;// Pass userSchedule to JavaScript
+      let paidHours = 0;
+
+      
+
+      if (userSchedules.length > 0) {
+        const scheduleDays = userSchedules[0].schedule_day;
+        const paidHoursArray = userSchedules[0].paid_hours;
+        const startDate = new Date(userSchedules[0].start_date);
+        const endDate = new Date(userSchedules[0].end_date);
+
+
+        // Get the paid hours for the specific date
+        const allDateSchedules = getPayPeriods(startDate, endDate, scheduleDays, paidHoursArray, selectedDate);
+        const scheduleForDate = allDateSchedules.find(schedule => schedule.date === selectedDate);
+        paidHours = scheduleForDate ? scheduleForDate.paidHour : 0;
+        console.log("allSchedule", allDateSchedules) // Set paidHours based on the found schedule
+        console.log("scheduke for date",scheduleForDate) // Set paidHours based on the found schedule
+      }
+
+      return paidHours;
+    }
+
+
+    
+
+    function showQuickEntryForm(selectedDate) {
+      const form = document.getElementById('quickEntryForm');
+      const quickEntryButton = document.getElementById('quick-entry-btn');
+      const scheduleHourInput = document.getElementById('scheduleHours');
+      const paidHours = getPaidHoursForDate(selectedDate);
+
+
+      if(quickEntryButton.innerText != 'Cancel') {
+        quickEntryButton.classList.replace('btn-primary', 'btn-danger');
+        quickEntryButton.innerText = 'Cancel'
+        scheduleHourInput.value = paidHours
+
+      } else {
+        quickEntryButton.classList.replace('btn-danger', 'btn-primary');
+        quickEntryButton.innerText = 'Add Quick Entry'
+        scheduleHourInput.value = 0
+      }
+      
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+     
+
+      // Get paid hours directly from the userSchedule data
+    
+      console.log('the paidhours', paidHours); // Debugging purposes
+
+      // Set the default value for the total time input
+      document.getElementById('totalTime').innerHTML= `Schedule Hours: <span style="font-weight: bold; color: white; font-size: 1.2rem">${paidHours}</span>`;
+    }
+
+    const handleAddNewTimesheet = (selectedDate) => { 
+      const newTimesheetButton = document.getElementById('addTimesheetBtn'); 
+        window.location.href = `/timesheetEntry?date=${selectedDate}`
+    }
+
+
+   
+  
+
+</script>
+
+
+
+
+<%- include('../partials/footer') %>
+

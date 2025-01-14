@@ -1,0 +1,163 @@
+<!-- leavePlanned.ejs -->
+
+
+
+<%- include('../partials/header', { title: 'Leave Request', user: user, messages: messages }) %>
+
+
+<div class="main col py-3 px-4 sticky-top titlebar">
+    <h1 class="pagetitle pb-2">Planned Leave</h1>
+</div>
+<div class="row pt-0 mx-4">
+<form id="plannedLeaveForm" action="/plannedLeave" method="POST">
+    
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="work_date">Work Date:</label>
+                    <div class="d-flex flex-row">
+                        <input type="text" id="formatted_work_date" class="form-control fw-bolder" value="<%= new Date(selectedDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).replace(/ /g, '-') %>" readonly>
+                        <input type="date" id="work_date" name="work_date" class="form-control fw-bolder" style="width: 45px;" value="<%=selectedDate%>" required oninput="calculateLastDate()" oninvalid="this.setCustomValidity('Enter the day you worked')" oninput="this.setCustomValidity('')">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="last_date">Last Date:</label>
+                    <div class="d-flex flex-row">
+                        <input type="text" id="formatted_last_date" class="form-control fw-bolder" readonly>
+                        <input type="date" style="display: none;" id="last_date" name="last_date" class="form-control readonly" style="width: 45px;" readonly>
+                    </div>
+                </div>
+            </div>            
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="num_days">Number of Days Off:</label>
+                    <input type="number" id="num_days" name="num_days" class="form-control" required  min="1" oninput="calculateLastDate()" > 
+                </div>
+            </div>
+        </div>
+       
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label for="notes">Notes:</label>
+                    <textarea id="notes" name="notes" class="form-control" rows="4" cols="50"></textarea>
+                </div>
+            </div>
+        </div>        
+        <div class="row">
+            <div class="col-md-12">
+                <button type="submit" class="btn btnprimary mt-2">Submit</button>
+                <a href="/time" class="btn btngray mt-2">Cancel</a>
+            </div>
+        </div>
+    
+</form>
+</div>
+
+<%- include('../partials/footer') %>
+
+
+<script>
+    console.log("a1   ")
+    if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+        console.log("Latitude: " + position.coords.latitude +
+                    " Longitude: " + position.coords.longitude);
+    });
+    } else {
+    console.log("Geolocation is not supported by this browser.");
+    }    
+
+    document.getElementById('formatted_work_date').addEventListener('click', function() {
+        const dateInput = document.getElementById('work_date');
+        dateInput.focus();
+    });
+
+    document.getElementById('work_date').addEventListener('change', function() {
+        const formattedDate = new Date(this.value).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).replace(/ /g, '-');
+        document.getElementById('formatted_work_date').value = formattedDate;
+    });
+
+    document.getElementById('formatted_last_date').addEventListener('click', function() {
+        const dateInput = document.getElementById('last_date');
+        dateInput.focus();
+    });
+
+    function updateFormattedLastDate() {
+        const lastDateValue = document.getElementById('last_date').value;
+        if (lastDateValue) {
+            const formattedDate = new Date(lastDateValue).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).replace(/ /g, '-');
+            document.getElementById('formatted_last_date').value = formattedDate;
+        }
+    }
+
+    // Call updateFormattedLastDate whenever the last_date is updated
+    document.getElementById('last_date').addEventListener('change', updateFormattedLastDate);
+
+    function calculateLastDate() {
+    var workDate = new Date(document.getElementById("work_date").value);
+    var numDays = parseInt(document.getElementById("num_days").value);
+
+    if (!isNaN(workDate.getTime()) && !isNaN(numDays)) {
+        var lastDate = new Date(workDate);
+
+        // Loop through each day to add numDays, excluding public holidays, Saturdays, and Sundays
+        for (var i = 1; i < numDays;) {
+            lastDate.setDate(lastDate.getDate() + 1);
+
+            // Check if the current day is a public holiday, Saturday, or Sunday
+            if (isPublicHoliday(lastDate) || lastDate.getDay() === 0 || lastDate.getDay() === 6) {
+                continue; // Skip this day
+            }
+
+            i++; // Increment i only if the current day is not skipped
+        }
+
+        var formattedLastDate = lastDate.toISOString().split('T')[0];
+        document.getElementById("last_date").value = formattedLastDate;
+        updateFormattedLastDate(); // Update the formatted display
+    }
+}
+
+// Function to check if a given date is a public holiday
+function isPublicHoliday(date) {
+    var formattedDate = date.toISOString().split('T')[0];
+    return holidays.hasOwnProperty(formattedDate);
+}
+
+// Example holidays object
+const holidays = {
+    <% publicHolidays.forEach((ph, index) => { %>
+        "<%= ph.holiday_date.slice(0, 10) %>": "<%= ph.holiday_name %>"<%= index < publicHolidays.length - 1 ? ',' : '' %>
+    <% }) %>
+};
+
+
+    function checkTimesheetEntered(workDate, numDays) {
+    var workDays = <%- JSON.stringify(workDays.map(entry => ({ ...entry, work_date: new Date(entry.work_date).toISOString().split('T')[0] }))) %>;
+    var messageContainer = document.getElementById('messageContainer');
+
+    // Loop through each date in the range starting from workDate
+    for (var i = 0; i < numDays; i++) {
+        var currentDate = new Date(workDate);
+        currentDate.setDate(currentDate.getDate() + i); // Increment date by i days
+        var formattedCurrentDate = currentDate.toISOString().split('T')[0];
+
+        // Check if the current date clashes with any date in workDays
+        var dateExists = workDays.some(entry => entry['work_date'] === formattedCurrentDate);
+        if (dateExists) {
+            messageContainer.innerHTML = '<div class="alert alert-primary" role="alert">You already have one or more timesheets entered during this period. This action will overwrite all timesheets during the period.</div>';
+            return; // Return early if clash is found
+        }
+    }
+
+    // If no clashes found, clear the message container
+    messageContainer.innerHTML = '';
+}
+
+
+</script>

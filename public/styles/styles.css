@@ -1,0 +1,560 @@
+
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+body {
+  font-family: "Poppins", Century Gothics, Arial, sans-serif ;
+}
+
+
+input[type="radio"] { 
+  border: solid green 3px;
+
+}
+
+
+.readonly {
+  background-color: #233949; /* Faint grey background */
+  cursor: not-allowed; /* Disable cursor */
+  opacity: 0.6; /* Reduce opacity */
+  color: #ffffff;
+}
+
+.calculated-field {
+  background-color: #233949 !important; /*  */
+  border: 1px solid; /* Default border */
+  border-color: #d0dcdc; /* Green border color */
+  cursor: not-allowed; /* Disable cursor */
+  opacity: 0.6; /* Reduce opacity */  
+  color: #ffffff;
+}
+
+.mandatory {
+  border: 2px solid red; /* Red border */
+}
+
+
+
+
+
+#resetPasswordLink {
+  text-decoration: none;
+  color: #233949;
+}
+
+#resetPasswordLink:hover {
+  color: #0e1f2b;
+}
+
+
+/*color codes
+    black: #0e1f2b
+    dark green: #248232
+    primary: #2ba84a
+    gray: #d0dcdc
+    white: #fcfffc
+    slate gray #233949
+*/
+
+
+
+
+.sidebar {
+  position: sticky;
+  top: 0;
+}
+
+.sidebar li { 
+  border: none;
+  padding: 5px;
+  width: 100%;
+}
+
+
+.sidebar .nav-item:hover a { 
+   color: #fcfffc;
+  background: #2ba84a;
+}
+
+.sidebar ul { 
+  width: 100%;
+}
+
+#active {
+  background-color: #2ba84a;
+  color: #fcfffc;
+}
+
+.logo {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.bgprimary {
+  background-color: #248232;
+}
+
+.bgtertiary {
+  background-color: #d0dcdc;
+}
+
+.bgsecondary {
+  background-color: #2ba84a;
+}
+
+.btnprimary {
+  background-color: #2ba84a;
+  color: #fcfffc;
+  outline-color: #2ba84a;
+}
+
+.btnprimary:hover {
+  background-color: #248232;
+  color: #fcfffc;
+}
+
+.btnsecondary {
+  background-color: #fcfffc;
+  color: #233949;
+  border-color: #9da8b1;
+}
+
+.btnsecondary:hover {
+  background-color: #233949;
+  color: #fcfffc;
+}
+
+
+
+section {
+  background-color: #e3e9f0;
+
+}
+
+
+
+
+.titlebar {
+  background-color: #e3e9f0;
+  color: #233949;
+  position: sticky;
+  top: 0px;
+  z-index: 1;
+}
+
+
+.main-timesheet {
+  height: 600px; /* Set a fixed height for the table container */
+  overflow-y: auto; /* Enable vertical scrolling */
+}
+
+
+#timesheetTable thead {
+  position: sticky;
+  top: 0px;
+
+  z-index: 2; /* Ensure the header is above the body content */
+}
+
+.btngray {
+  background-color: #233949;
+  color: #fcfffc;
+}
+
+.btngray:hover {
+  background-color: #0e1f2b;
+  color: #fcfffc;
+}
+
+.btndark {
+  background-color: #0e1f2b;
+  color: #fcfffc;
+}
+
+.btndark:hover {
+  background-color: #233949;
+  color: #fcfffc;
+}
+
+.loginprompt {
+  text-align: center;
+  justify-content: center;
+  width: 450px
+}
+
+.delete-icon {
+  color: #233949;
+  font-size: 20px;
+}
+
+.delete-icon:hover {
+  color: #0e1f2b;
+  font-size: 20px;
+}
+
+.approve-icon {
+  color: #233949;
+  font-size: 20px;
+}
+
+.approve-icon:hover {
+  color: #0e1f2b;
+  font-size: 20px;
+}
+
+.view-icon {
+  color: #233949;
+  font-size: 20px;
+  padding-top: 5px;
+}
+
+.view-icon:hover {
+  color: #0e1f2b;
+  font-size: 20px;
+}
+
+.edit-icon {
+  color: #233949;
+}
+
+.edit-icon:hover {
+  color: #0e1f2b;
+}
+
+
+.onlyread {
+  padding-left: 10px;
+  border-radius: 5px;
+  text-decoration-style: none;
+  color: #fcfffc;
+  background-color: #233949;
+}
+
+.span-info {
+border: 1px color #233949;
+border-radius: 5px;
+padding: 3px 5px 3px 5px;
+background-color: #233949;
+color: #d0dcdc;
+}
+
+
+
+.myAlert-top{
+  position: fixed;
+  top: 5px; 
+  left:2%;
+  width: 96%;
+}
+
+.myAlert-bottom{
+  position: fixed;
+  bottom: 5px;
+  left:2%;
+  width: 96%;
+}
+
+div.fullscreen {
+position: absolute;
+width:100%; 
+height:960px; 
+top: 0; 
+left: 0; 
+background-color: lightblue;
+}
+
+
+
+
+
+.table {
+  background-color: #fcfffc;
+  text-align: center;
+}
+
+.table th:first-child {
+  text-align: left;
+}
+
+
+
+.table td:first-child {
+  text-align: left;
+}
+
+
+
+.table thead th {
+  background-color: #233949;
+  color: #fcfffc;
+}
+
+.time-sheet-container td {
+  background: transparent;
+}
+
+.time-sheet-container .holiday {
+  background-color: #8bff94;
+}
+
+
+
+.time-sheet-container .table-success {
+  background-color: #fcfffc;
+  border-color: transparent;
+}
+
+.time-sheet-container .table-success .hidden {
+  background-color: #fcfffc;
+  border-color: transparent;
+}
+
+.leave_day_off_modal label span {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: rgb(0, 0, 116);
+}
+
+.leave_day_off_modal .disabled,
+.leave_day_off_modal .disabled span {
+  color: rgb(145, 145, 145);
+}
+
+.selected-row td {
+  background-color: #2ba84a !important;
+  color: #fcfffc;
+}
+
+.selected-row .view-icon,
+.selected-row .delete-icon,
+.selected-row .edit-icon {
+  color: #fcfffc;
+}
+
+.selected-row .view-icon:hover,
+.selected-row .delete-icon:hover,
+.selected-row .edit-icon:hover {
+  color: #0e1f2b;
+}
+
+
+.alert {
+  color: #fcfffc;
+  background-color: #415f77;
+}
+
+
+#cb1 {
+  accent-color: #233949;
+}
+
+
+
+/* MAIN.EJS STYLES STARTS HERER */
+
+tr.approved { 
+  background-color: #40a82b36 !important;
+ 
+}
+tr.pending {
+  background-color: #2b8fa8b7 !important;
+  
+}
+
+tr.rejected{
+  background-color: #a5292983 !important;
+  
+}
+tr.weekend {
+  background-color: #e3e9f0;
+  font-weight: 600;
+}
+
+tr.holiday {
+  font-weight: 600;
+}
+
+
+
+
+/* PROFILE STYLES */
+
+
+
+/* Eligibility Icons */
+.bi-check-circle {
+  color: #28a745;
+}
+
+.bi-x-circle {
+  color: #dc3545;
+}
+
+/* Responsive Tables */
+.table-responsive {
+  overflow-x: auto;
+}
+
+/* Modal Styles */
+.modal-title {
+  font-weight: 700;
+}
+
+/* Buttons in Forms */
+.form-control.d-none {
+  display: none;
+}
+
+/* Custom Button Styles */
+.btn-primary, .btn-success, .btn-secondary {
+  border-radius: 0.5rem;
+}
+
+/* Card Shadow */
+
+
+
+
+
+
+
+/* Tooltip Styles */
+.tooltip-inner {
+  max-width: 200px;
+  padding: 0.5rem;
+  color: #fff;
+  text-align: center;
+  background-color: #000;
+  border-radius: 0.25rem;
+}
+
+/* Modal Styles */
+.modal-title {
+  font-weight: 700;
+}
+
+/* Buttons in Forms */
+.form-control.d-none {
+  display: none;
+}
+
+/* Custom Button Styles */
+.btn-primary, .btn-success, .btn-secondary {
+  border-radius: 0.5rem;
+}
+
+/* Card Shadow */
+.card {
+  border-radius: 1rem;
+}
+
+/* Additional Styles */
+.btn-outline-primary {
+  transition: all 0.3s;
+}
+
+.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  color: #fff;
+}
+
+.list-unstyled li {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.list-unstyled li i {
+  margin-right: 0.5rem;
+}
+
+/* General card styling */
+#scheduleSection .card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 5px;
+}
+
+#scheduleSection .card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Schedule section headings */
+#scheduleSection h5 {
+
+  font-weight: 600;
+}
+
+/* Text styles for the cards */
+#scheduleSection .card-title {
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+}
+
+#scheduleSection .card-text {
+  font-size: 1rem;
+  color: #555;
+}
+
+/* Styling for total hours card */
+#scheduleSection .bg-info {
+  background-color: #233949 !important;
+  color: white !important;
+}
+
+#scheduleSection .bg-info h7 {
+  
+  color: white !important;
+}
+
+
+/* PROFILE STYLE ENDS */
+
+.day.holiday {
+  background-color: transparent;
+
+}
+
+.day.holiday:not(.prev-date, .next-date) { 
+  background-color: #def3f8;
+}
+
+.holiday-indicator { 
+  position: absolute;
+  top: 0px;
+  right: 4px;
+  font-weight: bold;
+  font-size: 0.7rem;
+}
+
+.holiday-name { 
+  font-size: 0.5rem !important;
+  position: absolute !important;
+  pointer-events: none;
+  padding: 2px;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+ opacity: 0;
+  height: 100%;
+  /* border: solid red; */
+  text-align: center;
+  width: 100%;
+  transition: .2s ease;
+}
+
+.calendar .days .day:hover .holiday-name {
+  background-color: #00000096;
+  font-weight: bold;
+  opacity: 100%;
+}
+
+
+
+
+/* MAIN.EJS STYLE ENDS HERE */
+
+

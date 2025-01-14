@@ -1,0 +1,46 @@
+<%- include('partials/header', { title: 'Report a Bug', user, messages: messages }) %>
+
+
+<div class="container w-100 h-100 mt-0">
+    <h2 class="mb-2">Report a Bug</h2>
+  <div class="row justify-content-start mt-2">
+    <div class="col-md-8">
+      <div class="card">
+        
+        <div class="card-body">
+          <form action="/report-bug" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" value="<%= user.email %>" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label for="phone">Phone (optional)</label>
+              <input type="text" id="phone" name="phone" class="form-control">
+            </div>
+            <div class="form-group">
+              <label for="subject">Subject</label>
+              <select id="subject" name="subject" class="form-control" required>
+                <option value="">Select a subject</option>
+                <option value="Bug report">Bug report</option>
+                <option value="How do I…">How do I…</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="description">Description</label>
+              <textarea id="description" name="description" class="form-control" required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="attachment">Attachment (optional)</label>
+              <input type="file" id="attachment" name="attachment" multiple class="form-control">
+            </div>
+            <div class="form-group">
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

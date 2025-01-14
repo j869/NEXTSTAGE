@@ -1,0 +1,18 @@
+<%- include('partials/header', {userInfo: userInfo}) %>
+
+
+  <section class="d-flex vh-100 justify-content-center align-items-center">
+    <div class="container pt-2 m-0 loginprompt">
+      <img src="../images/new.png" />
+      <hr>
+      <% if (user) { %>
+        <p>Hello, <%= user.username %>.</p>
+        <a class="btn btndark" href="/logout" role="button">Logout</a>
+        <% } else { %>
+          <a class="btn btnprimary btn-lg" href="/login" role="button">Login</a>
+          <% } %>
+    </div>
+  </section>
+
+
+  <%- include('partials/footer') %>

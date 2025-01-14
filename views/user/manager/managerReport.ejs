@@ -1,0 +1,227 @@
+<%- include('../../partials/header') %>
+
+<style>
+  h4 {
+    margin: 2rem 0rem 1rem;
+  }
+
+  .table-image {
+
+    td,
+    th {
+      vertical-align: middle;
+    }
+  }
+
+  table tbody td,
+  table tbody th,
+  table thead th {
+    font-size: 14px;
+    text-align: center;
+  }
+</style>
+
+<div class="main col py-3 px-4 titlebar">
+  <h1 class="pagetitle p-0 m-0">Reports</h1>
+  <div class="row p-0">
+    <div class="col-auto date-controls pt-4 mb-4">
+
+      <button id="decreaseStartDate" class="btn btngray">Decrease Start Date</button>
+      <button id="increaseStartDate" class="btn btngray">Increase Start Date</button>
+      <button id="decreaseEndDate" class="btn btngray">Decrease End Date</button>
+      <button id="increaseEndDate" class="btn btngray">Increase End Date</button>
+      <p id="dateRange">
+        Start Date: <span id="startDateDisplay"></span><br>
+        End Date: <span id="endDateDisplay"></span>
+      </p>
+   </div>
+  </div>
+
+
+  <table class="table table-bordered">
+    <thead class="thead-light">
+      <tr>
+        <th>Name</th>
+        <% 
+          // Define the date range
+
+
+          // Extract unique and sorted dates from the data within the specified range
+          let uniqueDates = new Set();
+          data.forEach(entry => {
+            let entryDate = new Date(entry.work_date);
+            if (entryDate >= startDate && entryDate <= endDate) {
+              uniqueDates.add(entryDate.toDateString());
+            }
+          });
+
+          let sortedUniqueDates = Array.from(uniqueDates).sort((a, b) => new Date(a) - new Date(b));
+
+          // Generate headers for each unique date
+          sortedUniqueDates.forEach(date => {
+        %>
+          <th><%= date %></th>
+        <% }); %>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% 
+        // Function to get person name by ID
+        const getPersonNameById = (id) => {
+          let personName = "Unknown";
+          data.forEach(entry => {
+            if (id == entry.person_id) { personName = entry.person_name}
+          })
+          return personName;
+        };
+
+        // Group data by person_id
+        let groupedData = {};
+        data.forEach(entry => {
+          let entryDate = new Date(entry.work_date);
+          if (entryDate >= startDate && entryDate <= endDate) {
+            if (!groupedData[entry.person_id]) {
+              groupedData[entry.person_id] = {};
+            }
+            groupedData[entry.person_id][entryDate.toDateString()] = entry.total_time;
+          }
+        });
+
+        // Render rows for each person
+        Object.keys(groupedData).forEach(personId => {
+          let totalHours = 0;
+          let totalMinutes = 0;
+      %>
+      <tr>
+        <td><%= getPersonNameById(parseInt(personId)) %></td>
+        <% 
+          // Render time for each date
+          sortedUniqueDates.forEach(date => {
+            let time = groupedData[personId][date];
+            if (time) {
+              totalHours += time.hours || 0;
+              totalMinutes += time.minutes || 0;
+            }
+        %>
+          <td>
+            <% if (time) { %>
+              <%= time.hours || 0 %>h <%= time.minutes || 0 %>m
+            <% } else { %>
+              -
+            <% } %>
+          </td>
+        <% }); %>
+        <td><%= totalHours + Math.floor(totalMinutes / 60) %>h <%= totalMinutes % 60 %>m</td>
+      </tr>
+      <% }); %>
+
+      <!-- Total Row -->
+      <tr>
+        <th>Total</th>
+        <% 
+          let grandTotalHours = 0;
+          let grandTotalMinutes = 0;
+          sortedUniqueDates.forEach(date => {
+            let dailyHours = 0;
+            let dailyMinutes = 0;
+            
+            // Calculate totals for each date
+            Object.keys(groupedData).forEach(personId => {
+              let time = groupedData[personId][date];
+              if (time) {
+                dailyHours += time.hours || 0;
+                dailyMinutes += time.minutes || 0;
+              }
+            });
+
+            grandTotalHours += dailyHours;
+            grandTotalMinutes += dailyMinutes;
+        %>
+        <td><%= dailyHours + Math.floor(dailyMinutes / 60) %>h <%= dailyMinutes % 60 %>m</td>
+        <% }); %>
+        <td><%= grandTotalHours + Math.floor(grandTotalMinutes / 60) %>h <%= grandTotalMinutes % 60 %>m</td>
+      </tr>
+    </tbody>
+
+  </table>
+</div>
+
+<script>
+
+      // Function to get the next Saturday
+      function getNextSaturday() {
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const daysUntilSaturday = (6 - dayOfWeek + 7) % 7;
+        const nextSaturday = new Date(today);
+        nextSaturday.setDate(today.getDate() + daysUntilSaturday);
+        
+        return nextSaturday;
+      }
+      
+      // Function to get the previous Sunday
+      function getPreviousSunday() {
+        const endDate = getNextSaturday();
+        const previousSunday = new Date(endDate);
+        previousSunday.setDate(endDate.getDate() - 6);
+        
+        return previousSunday;
+      }
+
+  // Initialize start and end dates from URL parameters
+  function getDateFromURL(paramName, defaultDate) {
+    const params = new URLSearchParams(window.location.search);
+    const dateStr = params.get(paramName);
+    return dateStr ? new Date(dateStr) : new Date(defaultDate);
+  }
+
+  const defaultEndDate = getNextSaturday();
+  const defaultStartDate = getPreviousSunday();
+  let startDate = getDateFromURL('startDate', defaultStartDate);
+  let endDate = getDateFromURL('endDate', defaultEndDate);
+
+  // Function to update the date display
+  function updateDateDisplay() {
+    document.getElementById('startDateDisplay').textContent = startDate.toDateString();
+    document.getElementById('endDateDisplay').textContent = endDate.toDateString();
+  }
+
+  // Function to reload the page with updated dates
+  function reloadWithUpdatedDates() {
+    const params = new URLSearchParams(window.location.search);
+    params.set('startDate', startDate.toISOString().split('T')[0]);
+    params.set('endDate', endDate.toISOString().split('T')[0]);
+    window.location.search = params.toString();
+  }
+
+  // Event listeners for buttons
+  document.getElementById('decreaseStartDate').addEventListener('click', () => {
+    startDate.setDate(startDate.getDate() - 1);
+    updateDateDisplay();
+    reloadWithUpdatedDates();
+  });
+
+  document.getElementById('increaseStartDate').addEventListener('click', () => {
+    startDate.setDate(startDate.getDate() + 1);
+    updateDateDisplay();
+    reloadWithUpdatedDates();
+  });
+
+  document.getElementById('decreaseEndDate').addEventListener('click', () => {
+    endDate.setDate(endDate.getDate() - 1);
+    updateDateDisplay();
+    reloadWithUpdatedDates();
+  });
+
+  document.getElementById('increaseEndDate').addEventListener('click', () => {
+    endDate.setDate(endDate.getDate() + 1);
+    updateDateDisplay();
+    reloadWithUpdatedDates();
+  });
+
+  // Initial display of dates
+  updateDateDisplay();
+</script>
+
+<%- include('../../partials/footer') %>

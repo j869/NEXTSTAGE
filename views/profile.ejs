@@ -1,0 +1,320 @@
+<%- include('partials/header', { title: 'Profile' , user, messages: messages }) %>
+
+  <% let role=userData ? userData.position : "" ; let email=user.email; let username=user.username; let
+    firstName=userData?.first_name || "" ; let lastName=userData?.last_name || "" ; let birthDate=userData?.birth_date ?
+    new Date(userData.birth_date).toLocaleDateString() : "" ; let age=userData?.birth_date ? Math.floor((new Date() -
+    new Date(userData.birth_date)) / (365.25 * 24 * 60 * 60 * 1000)) : "" ; let incorrectPass=status==404; %>
+
+    <div class="main col py-3 px-4 m-0">
+      <div class="main col py-3 px-4 w-100">
+        <h1 class="pagetitle">Profile</h1>
+      </div>
+
+      <div class="row">
+        <!-- Left Column: User Info -->
+        <div class="col-md-4">
+          <div class="card shadow-sm mb-4">
+            <div class="card-body text-center">
+              <img src="https://cdn-icons-png.flaticon.com/512/64/64572.png" alt="User" class="rounded-circle mb-3"
+                width="150">
+              <h4 class="mb-1">
+                <%= `${firstName} ${lastName}` %>
+              </h4>
+              <p class="text-muted mb-0"><i class="bi bi-envelope-fill"></i>
+                <%= email %>
+              </p>
+              <p class="text-muted"><i class="bi bi-briefcase-fill"></i>
+                <%= role %>
+              </p>
+            </div>
+            <div class="card-body">
+              <h5 class="card-title">Eligibility</h5>
+              <% if(userSchedule.length !=0){ %>
+                <ul class="list-unstyled">
+                  <li><i class="bi <%= userSchedule[0].disable_flexi ? 'bi-x-circle' : 'bi-check-circle' %>"></i> Flexi:
+                    <%= userSchedule[0].disable_flexi ? "Not Eligible" : "Eligible" %>
+                  </li>
+                  <li><i class="bi <%= userSchedule[0].disable_til ? 'bi-x-circle' : 'bi-check-circle' %>"></i> Time in
+                    Lieu: <%= userSchedule[0].disable_til ? "Not Eligible" : "Eligible" %>
+                  </li>
+                  <li><i class="bi <%= userSchedule[0].disable_rdo ? 'bi-x-circle' : 'bi-check-circle' %>"></i> RDO: <%=
+                      userSchedule[0].disable_rdo ? "Not Eligible" : "Eligible" %>
+                  </li>
+                </ul>
+                <% } else { %>
+                  <p class="text-muted">No Schedule</p>
+                  <% } %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Profile Details -->
+        <div class="col-md-8">
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <!-- Profile Options Buttons -->
+              <h5 class="card-title">Profile Options</h5>
+              <div class="btn-group mb-4" role="group" aria-label="Profile options">
+                <button id="infoBtn" type="button" class="btn btn-outline-success active">
+                  <i class="bi bi-info-circle-fill me-2"></i> Info
+                </button>
+                <button id="scheduleBtn" type="button" class="btn btn-outline-success">
+                  <i class="bi bi-calendar-check-fill me-2"></i> Schedules
+                </button>
+              </div>
+
+              <!-- Info Section (Default Visible) -->
+              <div id="infoSection">
+                <h5 class="card-title">Personal Information</h5>
+                <div class="row mb-3">
+                  <div class="col-sm-4 text-muted">Full Name</div>
+                  <div class="col-sm-8">
+                    <%= firstName ? `${firstName} ${lastName}` : "Name not yet entered" %>
+                  </div>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-sm-4 text-muted">Email</div>
+                  <div class="col-sm-8">
+                    <%= email %>
+                  </div>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-sm-4 text-muted">Password</div>
+                  <div class="col-sm-8">*************</div>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-sm-4 text-muted">Manager</div>
+                  <div class="col-sm-8">
+                    <% if (myManager) { %>
+                      <%= `${myManager.first_name || myManager.username} ${myManager.last_name || '' }` %>
+                        <% } else { %>
+                          No Assigned
+                          <% } %>
+                  </div>
+                </div>
+                <button id="openModal" type="button" class="btn btngray" data-bs-toggle="modal"
+                  data-bs-target="#inputPasswordModal">
+                  <i class="bi bi-pencil-square"></i> Edit
+                </button>
+
+                <hr>
+
+                <!-- Time Defaults Section -->
+                <h5 class="card-title mt-4">Time Defaults</h5>
+                <% if(userSchedule[0]) { %>
+                  <form id="timeDefaultsForm" action="/profile/editDefaultTime" method="POST">
+                    <div class="mb-3">
+                      <label class="form-label text-muted">Start Time</label>
+                      <span id="startTimeDisplay" class="d-block mb-2">
+                        <%= userSchedule[0].default_time_start ? (function(time) { let [hours, minutes,
+                          seconds]=time.split(':'); let period='AM' ; hours=parseInt(hours); if (hours>= 12) {
+                          period = 'PM';
+                          if (hours > 12) hours -= 12;
+                          } else if (hours === 0) {
+                          hours = 12;
+                          }
+                          return `${hours}:${minutes} ${period}`;
+                          })(userSchedule[0].default_time_start) : 'Not Set Yet' %>
+                      </span>
+                      <input type="time" id="startTimeInput" name="startTimeInput" class="form-control d-none"
+                        value="<%= userSchedule[0].default_time_start %>">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label text-muted">Break</label>
+                      <span id="breakTimeDisplay" class="d-block mb-2">
+                        <%= userSchedule[0].default_time_break ? (function(minutes) { if (minutes < 60) { return
+                          `${minutes} minute(s)`; } else { let hours=Math.floor(minutes / 60); let mins=minutes % 60;
+                          return `${hours} hour(s) and ${mins} minute(s)`; } })(userSchedule[0].default_time_break)
+                          : 'Not Set Yet' %>
+                      </span>
+                      <input type="number" id="breakTimeInput" name="breakTimeInput" class="form-control d-none"
+                        value="<%= userSchedule[0].default_time_break %>">
+                    </div>
+                    <div>
+                      <button id="editButton" type="button" class="btn btngray me-2"><i
+                          class="bi bi-pencil-square"></i> Edit</button>
+                      <button id="saveButton" type="submit" class="btn btn-success me-2 d-none">Save</button>
+                      <button id="cancelButton" type="button" class="btn btn-secondary d-none">Cancel</button>
+                    </div>
+                  </form>
+
+                  <script>
+                    document.getElementById('editButton').addEventListener('click', function () {
+                      document.getElementById('startTimeDisplay').classList.add('d-none');
+                      document.getElementById('breakTimeDisplay').classList.add('d-none');
+                      document.getElementById('startTimeInput').classList.remove('d-none');
+                      document.getElementById('breakTimeInput').classList.remove('d-none');
+                      document.getElementById('editButton').classList.add('d-none');
+                      document.getElementById('saveButton').classList.remove('d-none');
+                      document.getElementById('cancelButton').classList.remove('d-none');
+                    });
+
+                    document.getElementById('cancelButton').addEventListener('click', function () {
+                      document.getElementById('startTimeDisplay').classList.remove('d-none');
+                      document.getElementById('breakTimeDisplay').classList.remove('d-none');
+                      document.getElementById('startTimeInput').classList.add('d-none');
+                      document.getElementById('breakTimeInput').classList.add('d-none');
+                      document.getElementById('editButton').classList.remove('d-none');
+                      document.getElementById('saveButton').classList.add('d-none');
+                      document.getElementById('cancelButton').classList.add('d-none');
+                    });
+                  </script>
+                  <% } else { %>
+                    <p class="text-muted">No Schedule</p>
+                    <% } %>
+              </div>
+
+              <!-- Schedules Section (Initially Hidden) -->
+              <div id="scheduleSection" class="mt-4 d-none">
+                <!-- Work Schedule -->
+                <h5 class="card-title mb-3">User Work Schedule</h5>
+                <table class="table table-bordered">
+                  <thead class="thead-light">
+                    <tr>
+                      <th class="text-center">Sunday</th>
+                      <th class="text-center">Monday</th>
+                      <th class="text-center">Tuesday</th>
+                      <th class="text-center">Wednesday</th>
+                      <th class="text-center">Thursday</th>
+                      <th class="text-center">Friday</th>
+                      <th class="text-center">Saturday</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% let currentDayIndex=0; userSchedule[0]?.schedule_day.forEach((schedule, index)=> {
+                      if (currentDayIndex === 0) { %>
+                      <tr>
+                        <% } %>
+                          <td class="text-center">
+                            <%= Math.round(userSchedule[0].paid_hours[index] * 100) / 100 %> hours
+                          </td>
+                          <% currentDayIndex++; if (currentDayIndex===7) { currentDayIndex=0; %>
+                      </tr>
+                      <% } }); if (currentDayIndex !==0) { %>
+                        </tr>
+                        <% } %>
+                  </tbody>
+                </table>
+
+                <!-- Pay Day Schedule -->
+                <h5 class="card-title mt-4 mb-3">Pay Day Schedule</h5>
+                <div class="row g-3">
+                  <% payPeriods.forEach((schedule, index)=> { %>
+                    <div class="col-md-3">
+                      <div class="card h-100 border-success">
+                        <div class="card-body text-center">
+                          <h1 class="card-title" style="font-size: 0.8rem;">
+                            <%= index> 0 ? `${payPeriods[index - 1].toDateString()} - ${new Date(schedule -
+                              86400000).toDateString()}` : schedule.toDateString() %>
+                          </h1>
+                          <h7 class="card-text">
+                            <%= Math.round(individaulSchedTotalHours[index] * 100) / 100 %> hours
+                          </h7>
+                        </div>
+                      </div>
+                    </div>
+                    <% }) %>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- INPUT PASSWORD MODAL -->
+        <% if (status=="noManager" ) { %>
+          <div class="alert alert-danger alert-dismissible fade show absolute" role="alert"
+            style="margin: 50px; position: fixed; top: -20px; right: -20px; width: 500px;">
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <strong>No Manager</strong> <br> Please Assign your Manager First!
+          </div>
+          <script>
+            var alertList = document.querySelectorAll(".alert");
+            alertList.forEach(function (alert) {
+              new bootstrap.Alert(alert);
+            });
+          </script>
+          <% } %>
+
+            <% if (status=="noOrganization" ) { %>
+              <div class="alert alert-danger alert-dismissible fade show absolute" role="alert"
+                style="margin: 50px; position: fixed; top: -20px; right: -20px; width: 500px;">
+
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <strong>You are not assigned to any organization</strong> <br> Try Again If you Already have
+                Organization!
+              </div>
+              <script>
+                var alertList = document.querySelectorAll(".alert");
+                alertList.forEach(function (alert) {
+                  new bootstrap.Alert(alert);
+                });
+              </script>
+              <% } %>
+
+                <div class="modal fade" id="inputPasswordModal" tabindex="-1" aria-labelledby="inputPasswordLabel"
+                  aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title text-dark" id="inputPasswordLabel">Input Password to Proceed</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <form id="inputPasswordForm" action="/profile/check" method="POST">
+                        <div class="modal-body">
+                          <div class="mb-3">
+                            <label for="inputPasswordRole" class="form-label text-dark">Password</label>
+                            <input type="hidden" name="email" value="<%= email %>">
+                            <input type="password" class="form-control <% if(incorrectPass){ %>is-invalid<% } %>"
+                              id="inputPasswordRole" name="password" required>
+                            <% if(incorrectPass){ %>
+                              <div class="invalid-feedback">Incorrect Password</div>
+                              <% } %>
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                          <button type="submit" class="btn btn-primary">Enter</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
+                <%- include('partials/footer', {user}) %>
+
+                  <% if (status==404) { %>
+                    <script>
+                      document.getElementById('openModal').click();
+                    </script>
+                    <% } %>
+
+                      <!-- JavaScript for Toggle Buttons -->
+                      <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                          const infoBtn = document.getElementById('infoBtn');
+                          const scheduleBtn = document.getElementById('scheduleBtn');
+                          const infoSection = document.getElementById('infoSection');
+                          const scheduleSection = document.getElementById('scheduleSection');
+
+                          infoBtn.addEventListener('click', function () {
+                            // Activate Info Button
+                            infoBtn.classList.add('active');
+                            scheduleBtn.classList.remove('active');
+
+                            // Show Info Section and Hide Schedules Section
+                            infoSection.classList.remove('d-none');
+                            scheduleSection.classList.add('d-none');
+                          });
+
+                          scheduleBtn.addEventListener('click', function () {
+                            // Activate Schedules Button
+                            scheduleBtn.classList.add('active');
+                            infoBtn.classList.remove('active');
+
+                            // Show Schedules Section and Hide Info Section
+                            scheduleSection.classList.remove('d-none');
+                            infoSection.classList.add('d-none');
+                          });
+                        });
+                      </script>

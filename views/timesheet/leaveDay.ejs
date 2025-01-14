@@ -1,0 +1,337 @@
+<%- include('../partials/header', { title, userInfo, messages: messages }) %>
+
+<style>
+  label span {
+    font-weight: bold;
+  }
+
+  .modal-title span {
+    font-weight: bold;
+  }
+</style>
+<!-- LEAVE DAY OFF MODAL -->
+<% 
+
+
+  let flexiBalance = Number(flexTilRdo.totalFlexi) || 0;
+  let tilBalance = Number(flexTilRdo.totalTil) || 0;
+  let rdoBalance = Number(flexTilRdo.totalrdo) || 0;
+
+
+const paidHour = userWorkSchedule[0] ? userWorkSchedule[0].paidHour : 0;
+
+const halfPaidHour = paidHour / 2;
+
+let flexiInput = halfPaidHour;
+let tilInput = halfPaidHour;
+
+  let flexiTilSum = Number(tilBalance) + Number(flexiBalance); 
+  let isFlexiAndTil = flexiTilSum < paidHour ? false : true; 
+  let isRDO = Number(flexTilRdo.totalrdo) > 0 ? true : false;
+
+
+
+
+
+  if (isFlexiAndTil == true) {
+    if(flexiBalance < halfPaidHour || tilBalance < halfPaidHour ) { 
+      if (flexiBalance < halfPaidHour) { 
+        flexiInput = flexiBalance; 
+        tilInput = paidHour - flexiBalance; 
+      } 
+      if (tilBalance < halfPaidHour) { 
+        tilInput = tilBalance; 
+        flexiInput = paidHour - tilBalance; 
+      } 
+    } 
+  } 
+
+
+%>
+
+
+<style>
+  .balances span { 
+      font-weight: bold;
+      color: white;
+  }
+
+  .balances p { 
+      color: rgb(97, 214, 250);
+  }
+</style>
+
+<div class="main col py-3 px-4 sticky-top titlebar d-flex justify-content-between align-items-center">
+  <h1 class="pagetitle pb-2">Leave Full Day</h1>
+
+  <div class="balances d-flex justify-content-between gap-2">
+
+      
+    <p class="modal-title bw-bold" style="color: #0e1f2b;" id="exampleModalLabel"><strong>Schedule: </strong><span class="span-info"><%=paidHour%> <%= paidHour > 1 ? 'Hours' : 'Hour'%></span> </p>
+     <% if (userWorkSchedule[0] && userWorkSchedule[0].disable_flexi === false) { %>
+            <p class="modal-title bw-bold" style="color: #0e1f2b;" id="exampleModalLabel"><strong>Flexi: </strong><span class="span-info"><%=flexiBalance%> <%= flexiBalance > 1 ? 'Hours' : 'Hour'%></span></p>
+            <% } %>
+            <% if (userWorkSchedule && userWorkSchedule[0].disable_til === false) { %>
+            <p class="modal-title bw-bold" style="color: #0e1f2b;" id="exampleModalLabel"><strong>Til: </strong><span class="span-info"><%=tilBalance%> <%= tilBalance > 1 ? 'Hours' : 'Hour'%></span></p>
+            <% } %>
+            <% if (userWorkSchedule && userWorkSchedule[0].disable_rdo === false) { %>
+            <p class="modal-title bw-bold" style="color: #0e1f2b;" id="exampleModalLabel"><strong>RDO: </strong><span class="span-info"><%=rdoBalance%> <%= rdoBalance > 1 ? 'Days' : 'Day'%></span></p>
+            <% } %>
+  </div>
+  
+</div>
+
+<div class="form p-0 m-0" style="color: black;">
+    <div class="container row p-4 mx-4">
+        <form action="/timesheets/flexiDayOff" method="post" id="flexiDayOffForm">
+            <input type="hidden" name="paidHour" value="<%=paidHour%>">
+           
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 10px;">
+
+              <%if(paidHour <= 0) {%>
+                <div class="form-check flex-column" style="display: flex; align-items: center;">
+                  <h4>Leave for a day is not allowed if you have don't have a working schedule</h4>
+                </div>
+                <div class="modal-footer ">
+               
+                  <a href="/time?date=<%= date%>" class="btn btn-danger mt-2">Go Back to Timesheet</a>
+                  
+                </div>
+                
+              <% }else if(isFlexiAndTil == true || isRDO) { %>
+                <div class="form-check flex-column" style="display: flex; align-items: start;">
+                  <label class="form-check-label" for="til">Date:</label>
+                  <input type="date" name="workDate" id="workDateInput" style="width: 180px;" value="<%= date%>" required onchange="window.location.href='/timesheets/leaveDay/add?date=' + this.value">
+                </div>
+
+                <% if(isRDO == true) { %>
+                  
+                  <div class="form-check px-5" style="display: flex; align-items: center; gap: 5px;">
+                    <input class="form-check-input" type="radio" name="dayOffOption" id="rdo" value="rdo">
+                    <label class="form-check-label" for="rdo">Rostered Day Off (RDO): <span><%= Number(rdoBalance ).toFixed(0) %> Day/s Balance</span></label>
+                  </div>
+                
+                <% } %>
+
+                  
+                <!-- TIL BALANCE INPUT STARTS -->
+                  <% if(tilBalance < paidHour && tilBalance + flexiBalance >= paidHour && tilBalance  > 0){ %>
+                    <div class="form-check d-flex flex-column">
+                      <label class="form-check-label disabled" for="til">Time in Lieu (TIL): <span style="font-weight: bold;"><%= Number(tilBalance).toFixed(2) %> Hrs Balance</span></label>
+                      <p style="color: rgb(12, 0, 182); font-size: 12px;"> * You don't have enough til balance for a day off,  but you can still use Mix.</p>
+
+                    </div>  
+                  <% } else if( tilBalance  <= 0 || tilBalance + flexiBalance < paidHour ){ %>
+
+                    <div class="form-check d-flex flex-column">
+                      <label class="form-check-label disabled" for="til">Time in Lieu (TIL): <span style="font-weight: bold;"><%= Number(tilBalance).toFixed(2) %> Hrs Balance</span></label>
+                      <p style="color: rgb(255, 0, 0); font-size: 12px;"> * Not Enough Balance.</p>
+
+                    </div>    
+
+                  <%} else { %>
+                    <div class="form-check" style="display: flex; align-items: center; gap: 5px;">
+                      <input class="form-check-input" type="radio" name="dayOffOption" id="til" value="til">
+                      <label class="form-check-label" for="til">Time in Lieu (TIL): <span style="font-weight: bold;"><%= Number(tilBalance).toFixed(2) %> Hrs Balance</span></label>
+                    </div>
+                  <% } %>
+
+                  <!-- TIL INPUT ENDS -->
+
+
+
+
+                  <!-- Flexi INPUT STARTS -->
+                  <% if(flexiBalance < paidHour && tilBalance + flexiBalance >= paidHour  && flexiBalance  > 0) { %>
+                    <div class="form-check d-flex flex-column">
+                      <label class="form-check-label disabled" for="flexi">Flexi Hours: <span style="font-weight: bold;"><%= Number(flexiBalance).toFixed(2) %> Hrs Balance</span></label>
+                      <p style="color: rgb(12, 0, 182); font-size: 12px;">You don't have enough flexi balance for a day off but you can still use Mix.</p>
+
+                    </div>
+                  <%} else if ( flexiBalance  <= 0 || tilBalance + flexiBalance < paidHour) {%>
+                    <div class="form-check d-flex flex-column">
+                      <label class="form-check-label disabled" for="flexi">Flexi Hours: <span style="font-weight: bold;"><%= Number(flexiBalance).toFixed(2) %> Hrs Balance</span></label>
+                      <p style="color: rgb(255, 0, 0); font-size: 12px;"> * Not Enough Balance.</p>
+                    </div>
+                  <% } else { %>
+    
+    
+                    <div class="form-check px-5" style="display: flex; align-items: center; gap: 5px;">
+                      <input class="form-check-input" type="radio" name="dayOffOption" id="flexi" value="flexi">
+                      <label class="form-check-label" for="flexi">Flexi Hours: <span><%= Number(flexiBalance).toFixed(2) %> Hrs Balance</span></label>
+                    </div>
+    
+    
+                  <% } %>
+
+                 <!--FLEXI INPUT ENDS -->
+
+
+
+                 <!-- MIX INPUT STARTS HERE -->
+                  <%if(flexiBalance + tilBalance >= paidHour  ){%>
+                  <hr>
+                  <div class="form-check flex-column px-5" style="display: flex; align-items: start; gap: 5px;">
+                    <div class="form-check d-flex flex-row gap-2 justify-content-center" style="padding: 0;">
+                      <input class="form-check-input" type="radio" name="dayOffOption" id="mix" value="mix" onchange="toggleMixInputs(true)">
+                      <label class="form-check-label" for="mix">Mix: <span style="font-weight: bold;"><%= (flexiBalance + tilBalance)%> Hrs Balance</span></label>
+                    </div>
+                    <div id="mixInputDiv" class="row flex-row w-100 gap-3 justify-content-left align-items-center m-0">
+                      <div class="col-4">
+                        <label class="form-check-label" for="flexiHours">Flexi Hours:</label>
+                        
+                        <input type="number" id="flexiHours" name="flexiHours" class="form-control" placeholder="<%= flexiInput %>" value="<%= flexiInput %>" max="<%= flexiBalance %>" min="0" step="0.1" disabled onchange="validateMixInputs()">
+                        <div id="flexiError" class="text-danger"></div>
+                      </div>
+                      <div class="col-4">
+                        <label class="form-check-label" for="tilHours">TIL Hours:</label>
+                        <input type="number" id="tilHours" name="tilHours" class="form-control" placeholder="<%= tilInput %>" value="<%= tilInput %>" max="<%= tilBalance %>" min="0" step="0.1" disabled oninput="validateMixInputs()">
+                        <div id="tilError" class="text-danger"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <%} else {%>
+                    <hr>
+                    <div class="form-check flex-column" style="display: flex; align-items: start; gap: 5px;">
+                      <div class="form-check d-flex flex-column" style="padding: 0;">
+                        <label class="form-check-label" for="mix">Mix: <span style="font-weight: bold;"><%= (flexiBalance + tilBalance)%> Hrs Balance</span></label>
+
+                        <p style="color: rgb(255, 0, 0); font-size: 12px;"> * Not Enough Balance For Mix.</p>
+                      </div>
+                      
+                    </div>
+                    <%}%>
+
+                  <!-- MIX INPUTS ENDS HERE -->
+
+                  
+               
+                <div class="modal-footer ">
+                  <a href="/time" class="btn btn-danger mt-2">Cancel</a>
+                  <button type="submit" class="btn btn-primary" id="saveChangesBtn">Save Changes</button>
+                </div>
+              <% }else{ %>         
+                <div class="form-check flex-column px-5" style="display: flex; align-items: center;">
+                  <h4>You don't have any enough balances to take a day off</h4>
+                </div>
+                <div class="modal-footer ">
+               
+                  <a href="/time" class="btn btn-danger mt-2">Go Back to Timesheet</a>
+                  
+                </div>
+
+              <%}%>
+              
+                
+            </div>
+            
+          </form>
+    </div>
+  
+</div>
+
+<script>
+  function toggleMixInputs(enable) {
+  const flexiHoursInput = document.getElementById('flexiHours');
+  const tilHoursInput = document.getElementById('tilHours');
+  
+  if (enable) {
+    flexiHoursInput.removeAttribute('disabled');
+    tilHoursInput.removeAttribute('disabled');
+  } else {
+    flexiHoursInput.setAttribute('disabled', 'true');
+    tilHoursInput.setAttribute('disabled', 'true');
+  }
+}
+
+function validateMixInputs() {
+
+  
+  const flexiHoursInput = document.getElementById('flexiHours');
+  const tilHoursInput = document.getElementById('tilHours');
+  const flexiError = document.getElementById('flexiError');
+  const tilError = document.getElementById('tilError');
+  const paidHour = <%= paidHour %>;
+  const flexiBalance = <%= flexiBalance %>;
+  const tilBalance = <%= tilBalance %>;
+
+  let flexiHours = parseFloat(flexiHoursInput.value) || 0;
+  let tilHours = parseFloat(tilHoursInput.value) || 0;
+  let isValid = true;
+
+  // Clear previous errors
+  flexiError.innerText = '';
+  tilError.innerText = '';
+
+  // Adjust the other input to maintain the total hours
+  if (flexiHoursInput === document.activeElement) {
+
+    if (flexiHours > flexiBalance) {
+      flexiError.innerText = 'Flexi hours exceed balance';
+      isValid = false;
+    } else {
+    
+        tilHours = paidHour - flexiHours;
+      
+      if (tilHours > tilBalance) {
+        tilError.innerText = 'TIL hours exceed balance';
+        isValid = false;
+      } else {
+        tilHoursInput.value = tilHours.toFixed(2);
+      }
+
+      if (tilHours < 0) {
+        tilError.innerText = "TIL hours can't be negative";
+        isValid = false;
+      } 
+
+      
+    }
+  } else if (tilHoursInput === document.activeElement) {
+    if (tilHours > tilBalance) {
+      tilError.innerText = 'TIL hours exceed balance';
+      isValid = false;
+    } else {
+      flexiHours = paidHour - tilHours;
+      if (flexiHours > flexiBalance) {
+        flexiError.innerText = 'Flexi hours exceed balance';
+        isValid = false;
+      } else {
+        flexiHoursInput.value = flexiHours.toFixed(2);
+      }
+      if (flexi < 0) {
+        tilError.innerText = "TIL hours can't be negative";
+        isValid = false;
+      } 
+    }
+  }
+
+  // Validate total hours
+  if (isValid && (flexiHours + tilHours !== paidHour)) {
+    const errorMsg = `Total hours must equal ${paidHour}`;
+    flexiError.innerText = errorMsg;
+    tilError.innerText = errorMsg;
+    isValid = false;
+  }
+
+  return isValid;
+}
+
+
+function handleFormSubmit(event) {
+ 
+  var selectedRadio = document.querySelector('input[name="dayOffOption"]:checked');
+
+  if (!selectedRadio) {
+    event.preventDefault(); // Prevent form submission    
+      alert('Please select a leave type');
+      return false;
+  } // alert("GWAPO KO")
+  if (!validateMixInputs()) {
+    event.preventDefault();
+  }
+}
+document.getElementById('flexiDayOffForm').addEventListener('submit', handleFormSubmit);
+
+
+</script>

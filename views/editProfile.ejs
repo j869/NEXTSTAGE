@@ -1,0 +1,184 @@
+<%- include('partials/header', { title: 'Edit Profile', user, messages: messages }) %>
+
+<%
+let role = "";
+let email = user.email;
+let username = user.username;
+let firstName = "";
+let lastName = "";
+let birthDate = "";
+let age = "";
+
+if (userData) {
+    role = userData.position;
+    username = userData.username;
+    email = userData.email;
+    firstName = userData.first_name || "";
+    lastName = userData.last_name || "";
+    birthDate = userData.birth_date ? new Date(userData.birth_date).toLocaleDateString() : "";
+    age = userData.birth_date ? Math.floor((new Date() - new Date(userData.birth_date)) / (365.25 * 24 * 60 * 60 * 1000)) : "";
+}
+%>
+
+<div class="main col py-3 px-4 ">
+  <h1 class="pagetitle pb-2">Edit Profile</h1>
+</div>
+<div class="row pt-0 mx-4">
+  <div class="row">
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex flex-column align-items-center text-center">
+            <img src="https://cdn-icons-png.flaticon.com/512/64/64572.png" alt="Admin" class="rounded-circle" width="150" />
+            <div class="mt-3">
+              <h4><%= `${firstName} ${lastName}` %></h4>
+              <p class="text-secondary mb-1"><%= email %></p>
+              <p class="text-secondary mb-1"><%= role %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="card">
+        <form id="editProfileForm" action="/profile/update" method="post" novalidate>
+          <div class="card-body">
+
+            <div class="row mb-3">
+              <div class="col-sm-3">
+                <h6 class="mb-0">First Name</h6>
+              </div>
+              <div class="col-sm-9 text-secondary input-group">
+                <input type="text" class="form-control" value="<%= firstName %>" id="firstName" name="firstName" required>
+                <div class="invalid-feedback">First Name is required.</div>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-sm-3">
+                <h6 class="mb-0">Last Name</h6>
+              </div>
+              <div class="col-sm-9 text-secondary input-group">
+                <input type="text" class="form-control" value="<%= lastName %>" id="lastName" name="lastName" required>
+                <div class="invalid-feedback">Last Name is required.</div>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-sm-3">
+                <h6 class="mb-0">Email</h6>
+              </div>
+              <div class="col-sm-9 text-secondary input-group">
+                <input type="email" class="form-control" value="<%= email %>" id="email" name="email" required>
+                <div class="invalid-feedback">Valid Email is required.</div>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-sm-3">
+                <h6 class="mb-0">Username</h6>
+              </div>
+              <div class="col-sm-9 text-secondary input-group">
+                <input type="text" class="form-control" value="<%= username %>" id="username" name="username" required>
+                <div class="invalid-feedback">Username is required.</div>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-sm-3">
+                <h6 class="mb-0">Manager</h6>
+              </div>
+              <div class="col-sm-9 text-secondary input-group">
+                <select name="managerID" class="form-control" id="managerID" required>
+                  <% managers.forEach((manager) => { %>
+                  <% if(manager.id != userData.person_id) { %>
+                  <option <%= myManager && myManager.person_id == manager.id ? "selected" : "" %> value="<%= manager.id %>"><%= `${manager.first_name == null ? manager.username : manager.first_name} ${manager.last_name == null ? '' : manager.last_name}` %></option>
+                  <% } %>
+                  <% }) %>
+                </select>
+                <div class="invalid-feedback">Manager selection is required.</div>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-sm-3">
+                <h6 class="mb-0">New Password</h6>
+              </div>
+              <div class="col-sm-9 text-secondary input-group">
+                <input type="password" class="form-control" id="newPassword" name="newPassword" minlength="8">
+                <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('newPassword')">
+                  <i class="bi bi-eye-slash" id="toggleNewPasswordIcon"></i>
+                </button>
+                <div class="invalid-feedback">Password must be at least 8 characters long and include at least one lowercase letter, one uppercase letter, one symbol, and one number.</div>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-sm-3">
+                <h6 class="mb-0">Confirm Password</h6>
+              </div>
+              <div class="col-sm-9 text-secondary input-group">
+                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" minlength="8">
+                <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('confirmPassword')">
+                  <i class="bi bi-eye-slash" id="toggleConfirmPasswordIcon"></i>
+                </button>
+                <div class="invalid-feedback">Passwords must match.</div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-sm-3"></div>
+              <div class="col-sm-9 text-secondary">
+                <input type="button" class="btn btn-primary px-4" value="Save Changes" onclick="validateForm()">
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script>
+    function validateForm() {
+      let form = document.getElementById('editProfileForm');
+      form.classList.add('was-validated');
+
+      let password = document.getElementById('newPassword');
+      let confirmPassword = document.getElementById('confirmPassword');
+
+      // Password validation pattern: at least one lowercase, one uppercase, one number, and one special character
+      let passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+      // Check if password is not blank and meets the criteria
+      if (password.value !== "" && !passwordPattern.test(password.value)) {
+        password.setCustomValidity("Password must include at least one lowercase letter, one uppercase letter, one number, and one special character.");
+      } else {
+        password.setCustomValidity("");
+      }
+
+      // Check if confirmPassword matches password
+      if (password.value !== confirmPassword.value) {
+        confirmPassword.setCustomValidity("Passwords do not match");
+      } else {
+        confirmPassword.setCustomValidity("");
+      }
+
+      if (form.checkValidity()) {
+        form.submit();
+      }
+    }
+
+    function togglePasswordVisibility(fieldId) {
+      const passwordField = document.getElementById(fieldId);
+      const icon = document.getElementById(`toggle${fieldId.charAt(0).toUpperCase() + fieldId.slice(1)}Icon`);
+      if (passwordField.type === "password") {
+        passwordField.type = "text";
+        icon.classList.remove("bi-eye-slash");
+        icon.classList.add("bi-eye");
+      } else {
+        passwordField.type = "password";
+        icon.classList.remove("bi-eye");
+        icon.classList.add("bi-eye-slash");
+      }
+    }
+  </script>
