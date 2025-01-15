@@ -7,20 +7,6 @@
              
   <script>
 
-    async function fetchNotificationNum() {
-    const response = await fetch('/notification/unseen');
-    const notifications = await response.json();
-    document.getElementById('notification-indicator').innerHTML = notifications[0].count;
-
-    if(notifications[0].count == 0) {
-      document.getElementById('notification-indicator').style.display = 'none';
-
-    }
-// 
-    // console.log("notification", notifications[0].count);
-
-    
-  }
 
   setInterval(fetchNotificationNum, 30000); // Poll every 30 seconds
   document.addEventListener('DOMContentLoaded', fetchNotificationNum);
